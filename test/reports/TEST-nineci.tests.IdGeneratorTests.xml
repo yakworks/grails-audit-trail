@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="0" failures="0" hostname="BaseJump.local" name="nineci.tests.IdGeneratorTests" tests="1" time="0.058" timestamp="2009-10-07T06:59:38">
+  <properties />
+  <testcase classname="nineci.tests.IdGeneratorTests" name="testIdGen" time="0.024" />
+  <system-out><![CDATA[--Output from testIdGen--
+setting companyId to 5
+setting companyId to 5
+select nextId from NewObjectId where KeyName = 'TestDomains.OID'
+nextId is 10200
+]]></system-out>
+  <system-err><![CDATA[--Output from testIdGen--
+]]></system-err>
+</testsuite>

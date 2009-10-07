@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="0" failures="0" hostname="BaseJump.local" name="nineci.tests.AuditStampTests" tests="2" time="1.751" timestamp="2009-10-07T06:59:36">
+  <properties />
+  <testcase classname="nineci.tests.AuditStampTests" name="testCreateEditInsert" time="1.432" />
+  <testcase classname="nineci.tests.AuditStampTests" name="testCreateEditUpdate" time="0.254" />
+  <system-out><![CDATA[--Output from testCreateEditInsert--
+setting companyId to 5
+select oid, companyId,createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = 10000
+--Output from testCreateEditUpdate--
+setting companyId to 5
+select oid, createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = 2
+]]></system-out>
+  <system-err><![CDATA[--Output from testCreateEditInsert--
+--Output from testCreateEditUpdate--
+]]></system-err>
+</testsuite>
