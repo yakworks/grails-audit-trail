@@ -1,6 +1,0 @@
---Output from testIdGen--
-setting companyId to 5
-setting companyId to 5
-select nextId from NewObjectId where KeyName = 'TestDomains.OID'
-nextId is 10200
-

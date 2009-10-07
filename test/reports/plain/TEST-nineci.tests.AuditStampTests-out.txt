@@ -1,6 +1,0 @@
---Output from testCreateEditInsert--
-setting companyId to 5
-select oid, companyId,createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = 10000
---Output from testCreateEditUpdate--
-setting companyId to 5
-select oid, createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = 2

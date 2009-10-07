@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<testsuite errors="0" failures="0" hostname="BaseJump.local" name="nineci.TestDomainTests" tests="1" time="0.142" timestamp="2009-10-07T06:59:18">
-  <properties />
-  <testcase classname="nineci.TestDomainTests" name="testSomething" time="0.141" />
-  <system-out><![CDATA[--Output from testSomething--
-]]></system-out>
-  <system-err><![CDATA[--Output from testSomething--
-]]></system-err>
-</testsuite>
