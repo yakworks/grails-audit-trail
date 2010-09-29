@@ -1,4 +1,4 @@
-package nineci.tests
+package nine.tests
 
 @nineci.greenbill.Stamp
 class TestDomain {
