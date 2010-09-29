@@ -1,4 +1,4 @@
-<plugin name='audit-trail' version='0.1.6' grailsVersion='1.2 &gt; *'>
+<plugin name='audit-trail' version='1.0' grailsVersion='1.2 &gt; *'>
   <author>Joshua Burnett</author>
   <authorEmail>joshua@greenbill.com</authorEmail>
   <description>provides an annotation and hibernate events to take care of audit trail stamping for your gorm objects</description>
