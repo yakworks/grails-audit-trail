@@ -1,4 +1,4 @@
-package nineci.greenbill;
+package gorm;
 
 import org.codehaus.groovy.transform.GroovyASTTransformationClass;
 
@@ -13,6 +13,6 @@ import java.lang.annotation.Retention;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-@GroovyASTTransformationClass("nineci.greenbill.StampASTTransformation")
-public @interface Stamp {
+@GroovyASTTransformationClass("gorm.AuditStampASTTransformation")
+public @interface AuditStamp {
 }
