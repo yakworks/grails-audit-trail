@@ -1,4 +1,4 @@
-package nineci.tests
+package nine.tests
 
 /**
  * Authority domain class. from acegi

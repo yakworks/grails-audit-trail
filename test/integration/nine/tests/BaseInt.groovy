@@ -1,4 +1,4 @@
-package nineci.tests
+package nine.tests
 
 import org.springframework.security.context.SecurityContextHolder as SCH
 import org.springframework.security.providers.TestingAuthenticationToken
@@ -15,7 +15,7 @@ import org.codehaus.groovy.grails.web.context.ServletContextHolder;
 /*
 This is a base test to be extended so the integration tests have access to a user and companyId
 */
-class BaseIntTest extends GroovyTestCase {
+class BaseInt extends GroovyTestCase {
 	//def sessionFactory
 	def authUser
 	
@@ -23,10 +23,15 @@ class BaseIntTest extends GroovyTestCase {
 		//def ucontroller = new UserController()
 		//ServletContextHolder.setServletContext(ucontroller.request.getServletContext())
 		super.setUp()
-		genUser()
+		def u = TestPerson.findByUsername("joe")
+		if(!u){
+			genUser()
+		}else{
+			authUser = u
+		}
 		def user = TestPerson.get(authUser.id)    // or create a new one if one doesn't exist
 		assertNotNull user
-		BaseIntTest.authenticate(user, [new GrantedAuthorityImpl('ROLE_GBill_Company')])
+		BaseInt.authenticate(user, [new GrantedAuthorityImpl('ROLE_GBill_Company')])
 		
 	}
 
@@ -42,7 +47,12 @@ class BaseIntTest extends GroovyTestCase {
 	
 	def genUser(){
 		def person = new TestPerson(username:"joe",userRealName:"joe",enabled:true,passwd:"passwd",email:"joe@joe.com")
-		assert person.save(flush:true)
+		if( !person.save(flush:true) ) {
+			person.errors.each {
+				println it
+			}
+		}
+		//assert person.save(flush:true)
 		authUser = person
 	}
 	

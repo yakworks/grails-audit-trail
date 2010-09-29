@@ -1,4 +1,4 @@
-package nineci.tests
+package nine.tests
 
 import grails.test.*
 import groovy.sql.Sql
@@ -9,8 +9,9 @@ import org.apache.commons.lang.time.DateUtils
  * Uses the doms domain to test the created by and edited by fields and CreateEditeStamp ASTrandformer
  *
 **/
-class AuditStampTests extends BaseIntTest {
+class AuditStampTests extends BaseInt {
 	def sessionFactory
+	def dataSource
 
 	void setUp() {
 		super.setUp();
@@ -25,7 +26,7 @@ class AuditStampTests extends BaseIntTest {
 			}
 		}
 		assertNotNull(dom.id);
-		def sql = new Sql(sessionFactory.getCurrentSession().connection());
+		def sql = new Sql(dataSource);
 		def sqlCall = 'select oid, companyId,createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = ' + dom.id
 		println sqlCall
 		//def data = hibSession.createSQLQuery(sqlCall).uniqueResult();
@@ -39,6 +40,18 @@ class AuditStampTests extends BaseIntTest {
 		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
 		assertEquals(authUser.id, data.updatedBy)
 		assertEquals(authUser.id, data.createdBy)
+	}
+	
+	void testCreateEditInsert_with_companyId() {
+		def dom = new TestDomain(name:"blah2",companyId:7)
+		assert dom.save(flush:true)
+		
+		def sql = new Sql(dataSource);
+		def sqlCall = 'select oid, companyId,createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = ' + dom.id
+
+		def data = sql.firstRow(sqlCall)
+		assertNotNull(data)
+		assertEquals(7L, data.companyId)
 	}
 
 	void testCreateEditUpdate() {

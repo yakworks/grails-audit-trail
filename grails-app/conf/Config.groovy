@@ -1,10 +1,7 @@
 import static grails.util.Environment.*
 
+
 stamp{
-	mapping{
-		id=[column: 'OID', generator:'nineci.hibernate.NewObjectIdGenerator']
-		pluralTable=true //take domain name and add an s
-	}
 	audit{
 		//the created and edited fields should be present or they won't get added during AST
 		createdBy="createdBy" //id who created
@@ -23,3 +20,10 @@ stamp{
 //}
 
 
+
+// The following properties have been added by the Upgrade process...
+grails.views.default.codec="none" // none, html, base64
+grails.views.gsp.encoding="UTF-8"
+grails.gorm.default.mapping = {
+	id column: 'OID', generator:'nineci.hibernate.NewObjectIdGenerator'
+}

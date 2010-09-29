@@ -1,4 +1,4 @@
-package nineci.tests
+package nine.tests
 
 import grails.test.*
 import groovy.sql.Sql
@@ -9,7 +9,7 @@ import org.apache.commons.lang.time.DateUtils
  * Uses the doms domain to test the created by and edited by fields and CreateEditeStamp ASTrandformer
  *
 **/
-class IdGeneratorTests extends BaseIntTest {
+class IdGeneratorTests extends BaseInt {
 	def sessionFactory
 
 	void setUp() {

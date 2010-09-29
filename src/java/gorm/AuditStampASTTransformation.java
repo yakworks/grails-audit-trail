@@ -1,4 +1,4 @@
-package nineci.greenbill;
+package gorm;
 import org.codehaus.groovy.transform.ASTTransformation;
 import org.codehaus.groovy.transform.GroovyASTTransformation;
 import org.codehaus.groovy.control.CompilePhase;
@@ -25,9 +25,9 @@ import java.io.*;
  * properties to the subject class.
  */
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
-public class StampASTTransformation implements ASTTransformation {
+public class AuditStampASTTransformation implements ASTTransformation {
 
-	private static final Log LOG = LogFactory.getLog(StampASTTransformation.class);
+	private static final Log LOG = LogFactory.getLog(AuditStampASTTransformation.class);
 	private static final ConfigObject CO = new ConfigSlurper().parse(getContents(new File("./grails-app/conf/Config.groovy")));
 	private static final Properties CONF = (new ConfigSlurper().parse(getContents(new File("./grails-app/conf/Config.groovy")))).toProperties();
 

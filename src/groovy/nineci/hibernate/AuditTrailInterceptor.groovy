@@ -1,4 +1,4 @@
-package nineci.hibernate
+package nineci.hibernate //grails.plugin.audittrail
 import org.hibernate.EmptyInterceptor
 import org.hibernate.type.Type
 import org.springframework.security.context.SecurityContextHolder as SCH
@@ -19,50 +19,56 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 	boolean onFlushDirty(Object entity, Serializable id, Object[] currentState,Object[] previousState, String[] propertyNames,Type[] types) {
 		def metaClass = entity.metaClass
 		MetaProperty property = metaClass.hasProperty(entity, EDITED_DATE)
+		List fieldList = propertyNames.toList()
+		
 		if(property) {
 			def now = property.getType().newInstance([System.currentTimeMillis()] as Object[] )
-			setValue(currentState, propertyNames, EDITED_DATE, now)
+			setValue(currentState, fieldList, EDITED_DATE, now)
 		}
 		property = metaClass.hasProperty(entity,EDITED_BY)
 		if(property) {
-			setValue(currentState, propertyNames, EDITED_BY, getUserID())
+			setValue(currentState, fieldList, EDITED_BY, getUserID())
 		}
 		return true
 	}
 
-  boolean onSave(Object entity, Serializable id, Object[] state,String[ ] propertyNames, Type[] types) {
+  boolean onSave(Object entity, Serializable id, Object[] state,String[] propertyNames, Type[] types) {
 	 	def metaClass = entity.metaClass
 		MetaProperty property = metaClass.hasProperty(entity, CREATED_DATE)
 		def time = System.currentTimeMillis()
+		List fieldList = propertyNames.toList()
+		
 		if(property) {
 			def now = property.getType().newInstance([time] as Object[] )
-			setValue(state, propertyNames, CREATED_DATE, now)
+			setValue(state, fieldList, CREATED_DATE, now)
 		}
 		property = metaClass.hasProperty(entity,EDITED_DATE)
 		if(property) {
 			def now = property.getType().newInstance([time] as Object[] )
-			setValue(state, propertyNames, EDITED_DATE, now)
+			setValue(state, fieldList, EDITED_DATE, now)
 		}
 		property = metaClass.hasProperty(entity,EDITED_BY)
 		if(property) {
-			setValue(state, propertyNames, EDITED_BY, getUserID())
+			setValue(state, fieldList, EDITED_BY, getUserID())
 		}
 		property = metaClass.hasProperty(entity,CREATED_BY)
 		if(property) {
-			setValue(state, propertyNames, CREATED_BY, getUserID())
+			setValue(state, fieldList, CREATED_BY, getUserID())
 		}
 		property = metaClass.hasProperty(entity,COMPANY_ID)
 		def authPrincipal = SCH?.context?.authentication?.principal
 		if(property && authPrincipal && authPrincipal != "anonymousUser") {
-			println "setting companyId to ${getCompanyId(authPrincipal)}"
-			setValue(state, propertyNames, COMPANY_ID, getCompanyId(authPrincipal))
+			def curvalue = entity."$COMPANY_ID"
+			if(curvalue==null || curvalue==0){
+				//println "setting companyId to ${getCompanyId(authPrincipal)}"
+				setValue(state, fieldList, COMPANY_ID, getCompanyId(authPrincipal))
+			}
 		}
     	return true
   }
 
-  private void setValue(Object[] currentState, String[] propertyNames,
-                        String propertyToSet, Object value) {
-    def index = propertyNames.toList().indexOf(propertyToSet)
+  def setValue(Object[] currentState, List fieldList, String propertyToSet, Object value) {
+    def index = fieldList.indexOf(propertyToSet)
     if (index >= 0) {
       currentState[index] = value
     }

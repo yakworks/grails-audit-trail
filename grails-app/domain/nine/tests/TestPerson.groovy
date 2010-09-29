@@ -1,4 +1,4 @@
-package nineci.tests
+package nine.tests
 
 /**
  * User domain class. from acegi
