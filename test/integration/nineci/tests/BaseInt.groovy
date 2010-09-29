@@ -23,7 +23,12 @@ class BaseIntTest extends GroovyTestCase {
 		//def ucontroller = new UserController()
 		//ServletContextHolder.setServletContext(ucontroller.request.getServletContext())
 		super.setUp()
-		genUser()
+		def u = TestPerson.findByUsername("joe")
+		if(!u){
+			genUser()
+		}else{
+			authUser = u
+		}
 		def user = TestPerson.get(authUser.id)    // or create a new one if one doesn't exist
 		assertNotNull user
 		BaseIntTest.authenticate(user, [new GrantedAuthorityImpl('ROLE_GBill_Company')])
@@ -42,7 +47,12 @@ class BaseIntTest extends GroovyTestCase {
 	
 	def genUser(){
 		def person = new TestPerson(username:"joe",userRealName:"joe",enabled:true,passwd:"passwd",email:"joe@joe.com")
-		assert person.save(flush:true)
+		if( !person.save(flush:true) ) {
+			person.errors.each {
+				println it
+			}
+		}
+		//assert person.save(flush:true)
 		authUser = person
 	}
 	
