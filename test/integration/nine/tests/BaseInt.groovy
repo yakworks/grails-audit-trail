@@ -31,7 +31,7 @@ class BaseInt extends GroovyTestCase {
 		}
 		def user = TestPerson.get(authUser.id)    // or create a new one if one doesn't exist
 		assertNotNull user
-		BaseIntTest.authenticate(user, [new GrantedAuthorityImpl('ROLE_GBill_Company')])
+		BaseInt.authenticate(user, [new GrantedAuthorityImpl('ROLE_GBill_Company')])
 		
 	}
 

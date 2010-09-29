@@ -1,5 +1,5 @@
 dataSource {
-	pooled = true
+	pooled = false
 	driverClassName = "org.hsqldb.jdbcDriver"
 	username = "sa"
 	password = ""
@@ -7,7 +7,8 @@ dataSource {
 hibernate {
     cache.use_second_level_cache=true
     cache.use_query_cache=true
-    cache.provider_class='com.opensymphony.oscache.hibernate.OSCacheProvider'
+	cache.provider_class='org.hibernate.cache.EhCacheProvider'
+	naming_strategy = 'org.hibernate.cfg.DefaultNamingStrategy'
 }
 // environment specific settings
 environments {
@@ -19,7 +20,7 @@ environments {
 	}
 	test {
 		dataSource {
-			dbCreate = "update"
+			dbCreate = "create-drop"
 			url = "jdbc:hsqldb:mem:testDb"
 		}
 	}

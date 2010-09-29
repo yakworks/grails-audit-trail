@@ -1,11 +1,11 @@
 
 class AuditTrailGrailsPlugin {
     // the plugin version
-    def version = "0.1.5"
+    def version = "0.1.6"
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "1.2-M2 > *"
+    def grailsVersion = "1.2 > *"
     // the other plugins this plugin depends on
-    def dependsOn = [hibernate:"1.1 > *",acegi:"0.5.2 > *"]
+    def dependsOn = [hibernate:"1.2 > *",acegi:"0.5.3 > *"]
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
             'grails-app/views/**','grails-app/domain/**',
