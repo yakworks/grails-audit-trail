@@ -1,7 +1,7 @@
 package nineci.hibernate //grails.plugin.audittrail
 import org.hibernate.EmptyInterceptor
 import org.hibernate.type.Type
-import org.springframework.security.context.SecurityContextHolder as SCH
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
@@ -56,7 +56,7 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 			setValue(state, fieldList, CREATED_BY, getUserID())
 		}
 		property = metaClass.hasProperty(entity,COMPANY_ID)
-		def authPrincipal = SCH?.context?.authentication?.principal
+		def authPrincipal = SCH.context.authentication?.principal
 		if(property && authPrincipal && authPrincipal != "anonymousUser") {
 			def curvalue = entity."$COMPANY_ID"
 			if(curvalue==null || curvalue==0){
@@ -75,17 +75,17 @@ class AuditTrailInterceptor extends EmptyInterceptor {
   }
 
 	Long getUserID() {
-		def authPrincipal = SCH?.context?.authentication?.principal
+		def authPrincipal = SCH.context.authentication?.principal
 		// Added check for error coming while creating new company
 		if(authPrincipal && authPrincipal != "anonymousUser"){
-			return authPrincipal.domainClass.id
+			return authPrincipal.id
 		} else {
 			return ANONYMOUS_USER
 		}
 	}
 	
 	Long getCompanyId(authPrincipal) {
-		return authPrincipal.domainClass?.companyId
+		return authPrincipal.hasProperty('companyId')?authPrincipal.companyId:0
 	}
 }
 
