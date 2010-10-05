@@ -33,7 +33,7 @@ import org.hibernate.engine.EntityEntry
 import org.hibernate.type.Type
 import org.hibernate.Transaction
 import org.hibernate.CallbackException
-import org.springframework.security.context.SecurityContextHolder as SCH
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.apache.log4j.Logger
 
 /**

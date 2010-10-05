@@ -27,3 +27,8 @@ grails.views.gsp.encoding="UTF-8"
 grails.gorm.default.mapping = {
 	id column: 'OID', generator:'nineci.hibernate.NewObjectIdGenerator'
 }
+
+// Added by the Spring Security Core plugin:
+grails.plugins.springsecurity.userLookup.userDomainClassName = 'nine.tests.TestUser'
+grails.plugins.springsecurity.userLookup.authorityJoinClassName = 'nine.tests.TestUserTestRole'
+grails.plugins.springsecurity.authority.className = 'nine.tests.TestRole'
