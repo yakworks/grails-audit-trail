@@ -1,4 +1,4 @@
-<plugin name='audit-trail' version='1.1' grailsVersion='1.3 &gt; *'>
+<plugin name='audit-trail' version='1.2' grailsVersion='1.3 &gt; *'>
   <author>Joshua Burnett</author>
   <authorEmail>joshua@greenbill.com</authorEmail>
   <description>provides an annotation and hibernate events to take care of audit trail stamping for your gorm objects</description>
@@ -8,11 +8,10 @@
     <resource>DataSource</resource>
     <resource>SecurityConfig</resource>
     <resource>UrlMappings</resource>
-    <resource>nine.tests.TestAuthority</resource>
     <resource>nine.tests.TestDomain</resource>
-    <resource>nine.tests.TestPerson</resource>
     <resource>nine.tests.TestRole</resource>
     <resource>nine.tests.TestUser</resource>
+    <resource>nine.tests.TestUserTestRole</resource>
   </resources>
   <dependencies>
     <plugin name='hibernate' version='1.3 &gt; *' />
