@@ -37,6 +37,7 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 		MetaProperty property = metaClass.hasProperty(entity, CREATED_DATE)
 		def time = System.currentTimeMillis()
 		List fieldList = propertyNames.toList()
+		Long userId = getUserID()
 		
 		if(property) {
 			def now = property.getType().newInstance([time] as Object[] )
@@ -49,18 +50,17 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 		}
 		property = metaClass.hasProperty(entity,EDITED_BY)
 		if(property) {
-			setValue(state, fieldList, EDITED_BY, getUserID())
+			setValue(state, fieldList, EDITED_BY, userId)
 		}
 		property = metaClass.hasProperty(entity,CREATED_BY)
 		if(property) {
-			setValue(state, fieldList, CREATED_BY, getUserID())
+			setValue(state, fieldList, CREATED_BY, userId)
 		}
 		property = metaClass.hasProperty(entity,COMPANY_ID)
 		def authPrincipal = SCH.context.authentication?.principal
 		if(property && authPrincipal && authPrincipal != "anonymousUser") {
 			def curvalue = entity."$COMPANY_ID"
-			if(curvalue==null || curvalue==0){
-				//println "setting companyId to ${getCompanyId(authPrincipal)}"
+			if(curvalue==null || curvalue==0){ //only update if its 0 or null
 				setValue(state, fieldList, COMPANY_ID, getCompanyId(authPrincipal))
 			}
 		}
@@ -68,7 +68,7 @@ class AuditTrailInterceptor extends EmptyInterceptor {
   }
 
   def setValue(Object[] currentState, List fieldList, String propertyToSet, Object value) {
-    def index = fieldList.indexOf(propertyToSet)
+    int index = fieldList.indexOf(propertyToSet)
     if (index >= 0) {
       currentState[index] = value
     }
