@@ -1,8 +1,0 @@
-DefaultPackage
-grails-app.conf
-grails-app.domain.nineci.tests
-scripts
-src.groovy.nineci.hibernate
-src.java.nineci.greenbill
-test.integration.nineci.tests
-test.unit.nineci
