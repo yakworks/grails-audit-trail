@@ -2,8 +2,6 @@ package nine.tests
 
 import grails.test.*
 import groovy.sql.Sql
-import java.sql.ResultSet
-import org.apache.commons.lang.time.DateUtils
 
 /**
  * Uses the doms domain to test the created by and edited by fields and CreateEditeStamp ASTrandformer

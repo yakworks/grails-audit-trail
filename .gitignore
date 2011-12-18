@@ -1,0 +1,9 @@
+/plugin.xml
+grails-*.zip
+web-app/WEB-INF/classes/
+target/
+target-eclipse/
+c.tld
+fmt.tld
+.link_to_grails_plugins/
+stacktrace.log
