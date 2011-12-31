@@ -1,11 +1,10 @@
 package nine.tests
 
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder as AH
-import org.codehaus.groovy.grails.web.context.ServletContextHolder;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.codehaus.groovy.grails.plugins.springsecurity.GrailsUser
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.AuthorityUtils
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 /*
 This is a base test to be extended so the integration tests have access to a user and companyId

@@ -34,7 +34,12 @@ class TestUserTestRole implements Serializable {
 
 	static boolean remove(TestUser testUser, TestRole testRole, boolean flush = false) {
 		TestUserTestRole instance = TestUserTestRole.findByTestUserAndTestRole(testUser, testRole)
-		instance ? instance.delete(flush: flush) : false
+		if (!instance) {
+			return false
+		}
+
+		instance.delete(flush: flush)
+		true
 	}
 
 	static void removeAll(TestUser testUser) {
