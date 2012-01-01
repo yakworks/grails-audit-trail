@@ -39,12 +39,10 @@ grails{
 		audittrail{			
 			createdBy.field  = "createdBy"
 			createdBy.type   = "java.lang.Long" //fully qualified class name if not a java.lang.(String,Long,etc..)
-			createdBy.fieldValue  = '0' //can be a string like '"system"' or an expression like ''
 			
 			createdDate{
 				field = "createdDate"
 				type  = "java.util.Date"
-				fieldValue  = 'new java.util.Date()'
 				constraints = "nullable:true"
 				mapping = "column: 'date_created'"
 			}
