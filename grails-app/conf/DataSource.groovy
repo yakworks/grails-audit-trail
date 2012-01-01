@@ -1,13 +1,12 @@
 dataSource {
     pooled = true
     driverClassName = "org.h2.Driver"
+	//dialect = 'org.hibernate.dialect.HSQLDialect'
     username = "sa"
     password = ""
 }
 hibernate {
-    cache.use_second_level_cache = true
-    cache.use_query_cache = true
-    cache.region.factory_class = 'net.sf.ehcache.hibernate.EhCacheRegionFactory'
+    cache.use_second_level_cache = false
 	naming_strategy = 'org.hibernate.cfg.DefaultNamingStrategy'
 }
 // environment specific settings
@@ -20,7 +19,7 @@ environments {
     }
     test {
         dataSource {
-            dbCreate = "update"
+            dbCreate = "create-drop"
             url = "jdbc:h2:mem:testDb;MVCC=TRUE"
         }
     }

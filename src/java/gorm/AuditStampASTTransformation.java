@@ -31,176 +31,102 @@ import org.codehaus.groovy.control.CompilePhase;
 import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.transform.ASTTransformation;
 import org.codehaus.groovy.transform.GroovyASTTransformation;
+import org.codehaus.groovy.ast.builder.AstBuilder;
+
 
 /**
- * Performs an AST transformation on a class - adds createdBy/createdDate
- * editedBy/EditedDate id and table properties to the subject class.
+ * Performs an ast transformation on a class - adds createdBy/createdDate editedBy/EditedDate id and table
+ * properties to the subject class.
  */
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 public class AuditStampASTTransformation implements ASTTransformation {
-
-	// private static final Log LOG =
-	// LogFactory.getLog(AuditStampASTTransformation.class);
-	private static final ConfigObject CO = new ConfigSlurper()
-			.parse(getContents(new File("./grails-app/conf/Config.groovy")));
-	private static final Properties CONF = (new ConfigSlurper()
-			.parse(getContents(new File("./grails-app/conf/Config.groovy"))))
-			.toProperties();
-
-	static {
-		// System.out.println("greenbill  is [" +
-		// getMap(CO,"stamp.mapping.pluralTable").getClass()+ "]");
-		// ConfigurationHolder.setConfig(CO);
-		// Map confmap = ConfigurationHolder.getFlatConfig();
-	}
+	//private static final Log LOG = LogFactory.getLog(AuditStampASTTransformation.class);
+	
+	private static final ConfigObject CO = new ConfigSlurper().parse(getContents(new File("./grails-app/conf/Config.groovy")));
+	private static final Properties CONF = (new ConfigSlurper().parse(getContents(new File("./grails-app/conf/Config.groovy")))).toProperties();
 
 	public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
+		//System.out.println("1. ConfigObject : " + CO);
+		Map configMap = (Map)CO.flatten();
+		
+		NewFieldProps createdByField = NewFieldProps.init("createdBy","java.lang.Long",configMap);
+		NewFieldProps editedByField = NewFieldProps.init("editedBy","java.lang.Long",configMap);
 
-		String createdByField = CONF.getProperty("stamp.audit.createdBy");
-		String editedByField = CONF.getProperty("stamp.audit.editedBy");
-		String editedDateField = CONF.getProperty("stamp.audit.editedDate");
-		String createdDateField = CONF.getProperty("stamp.audit.createdDate");
+		NewFieldProps editedDateField = NewFieldProps.init("editedDate","java.util.Date",configMap);
+		NewFieldProps createdDateField = NewFieldProps.init("createdDate","java.util.Date",configMap);
 
 		for (ASTNode astNode : astNodes) {
 			if (astNode instanceof ClassNode) {
 				ClassNode classNode = (ClassNode) astNode;
-				// List<FieldNode> fnlist = classNode.getFields();
-				// LOG.info("[Audit stamp ASTTransformation] Adding propertie [edited..created] to class ["
-				// + classNode.getName() + "]");
-				// System.out.println(classNode.getName() +
-				// " - [Audit stamp ASTTransformation] Adding propertie [edited..created]");
-				if (editedByField != null) {
-					classNode.addProperty(editedByField, Modifier.PUBLIC,
-							new ClassNode(Long.class),
-							new ConstantExpression(0), null, null);
+				List<FieldNode>  fnlist = classNode.getFields();			
+				//LOG.info("[Audit stamp ASTTransformation] Adding propertie [edited..created] to class [" + classNode.getName() + "]");
+				//System.out.println(classNode.getName() + " - [Audit stamp ASTTransformation] Adding propertie [edited..created]");
+				if(editedByField!=null){
+					//addFieldNode(classNode,editedByField);
+					classNode.addProperty(editedByField.name, Modifier.PUBLIC, new ClassNode(editedByField.type), new ConstantExpression(0), null, null);
 				}
-				if (createdByField != null) {
-					classNode.addProperty(createdByField, Modifier.PUBLIC,
-							new ClassNode(Long.class),
-							new ConstantExpression(0), null, null);
+				if(createdByField!=null){
+					classNode.addProperty(createdByField.name, Modifier.PUBLIC, new ClassNode(createdByField.type), new ConstantExpression(0), null, null);
 				}
-				Expression now = new ConstructorCallExpression(new ClassNode(
-						java.util.Date.class),
-						MethodCallExpression.NO_ARGUMENTS);
-				if (createdDateField != null) {
-					classNode.addProperty(createdDateField, Modifier.PUBLIC,
-							new ClassNode(java.util.Date.class), now, null,
-							null);
-					addNullableConstraint(classNode, createdDateField);
+				
+				if(editedDateField!=null){
+					Expression enow = new ConstructorCallExpression(new ClassNode(editedDateField.type),MethodCallExpression.NO_ARGUMENTS);
+					classNode.addProperty(editedDateField.name, Modifier.PUBLIC, new ClassNode(editedDateField.type), enow, null, null);
+					addNullableConstraint(classNode,editedDateField.name);
 				}
-				if (editedDateField != null) {
-					classNode.addProperty(editedDateField, Modifier.PUBLIC,
-							new ClassNode(java.util.Date.class), now, null,
-							null);
-					addNullableConstraint(classNode, editedDateField);
+				if(createdDateField!=null){
+					Expression cnow = new ConstructorCallExpression(new ClassNode(createdDateField.type),MethodCallExpression.NO_ARGUMENTS);
+					classNode.addProperty(createdDateField.name, Modifier.PUBLIC, new ClassNode(createdDateField.type), cnow, null, null);
+					addNullableConstraint(classNode,createdDateField.name);
 				}
-
-				/****
-				 * comment this out if you don't want our the custom ID and
-				 * table name stuff
-				 ****/
-				addTableAndIdMapping(classNode);
+				
 
 			}
 		}
 	}
 
-	public void addTableAndIdMapping(ClassNode classNode) {
-		FieldNode closure = classNode.getDeclaredField("mapping");
-
-		if (closure != null) {
-			boolean hasTable = hasFieldInClosure(closure, "table");
-			boolean hasId = hasFieldInClosure(closure, "id");
-
-			ClosureExpression exp = (ClosureExpression) closure
-					.getInitialExpression();
-			BlockStatement block = (BlockStatement) exp.getCode();
-
-			// this just adds an s to the class name for the table if its not
-			// specified
-			Boolean pluralize = (Boolean) getMap(CO,
-					"stamp.mapping.pluralTable");
-			if (!hasTable && pluralize != null && pluralize) {
-				String tablename = GrailsNameUtils.getShortName(classNode
-						.getName()) + "s";
-				// LOG.info("Added new mapping to assign table: " + tablename);
-				MethodCallExpression tableMeth = new MethodCallExpression(
-						VariableExpression.THIS_EXPRESSION,
-						new ConstantExpression("table"),
-						new ArgumentListExpression(new ConstantExpression(
-								tablename)));
-				// block = (BlockStatement) exp.getCode();
-				block.addStatement(new ExpressionStatement(tableMeth));
-				// System.out.println(classNode.getName()+" - Added table mapping "
-				// + tablename );
-			}
-			// This adds the ID generator that we use for domian classes
-			@SuppressWarnings("rawtypes")
-			Map tableconf = (Map) getMap(CO, "stamp.mapping.id");
-			if (!hasId && tableconf != null) {
-				NamedArgumentListExpression namedarg = new NamedArgumentListExpression();
-				if (tableconf.get("column") != null) {
-					namedarg.addMapEntryExpression(new ConstantExpression(
-							"column"),
-							new ConstantExpression(tableconf.get("column")
-									.toString()));
-				}
-				if (tableconf.get("generator") != null) {
-					namedarg.addMapEntryExpression(new ConstantExpression(
-							"generator"),
-							new ConstantExpression(tableconf.get("generator")
-									.toString()));
-				}
-				MethodCallExpression tableMeth = new MethodCallExpression(
-						VariableExpression.THIS_EXPRESSION,
-						new ConstantExpression("id"), namedarg);
-				// block = (BlockStatement) exp.getCode();
-				block.addStatement(new ExpressionStatement(tableMeth));
-				// System.out.println(classNode.getName() +
-				// " - Added ID mapping with "+ tableconf);
-			}
-		}
-		// System.out.println(block.toString());
+	public void addFieldNode(ClassNode classNode,String fieldName){
+		String checkVersion = "Long " + fieldName + " = 0";
+		List<ASTNode> nodes = new AstBuilder().buildFromString(CompilePhase.CLASS_GENERATION,false,checkVersion);
+		FieldNode fnode = (FieldNode)nodes.get(0);
+		classNode.addField(fnode);
 	}
 
-	public void addNullableConstraint(ClassNode classNode, String fieldName) {
+	public void addNullableConstraint(ClassNode classNode,String fieldName){
 		FieldNode closure = classNode.getDeclaredField("constraints");
 
-		if (closure != null) {
+		if(closure!=null){
 
-			ClosureExpression exp = (ClosureExpression) closure
-					.getInitialExpression();
+			ClosureExpression exp = (ClosureExpression)closure.getInitialExpression();
 			BlockStatement block = (BlockStatement) exp.getCode();
 
-			if (!hasFieldInClosure(closure, fieldName)) {
+			if(!hasFieldInClosure(closure,fieldName)){
 				NamedArgumentListExpression namedarg = new NamedArgumentListExpression();
-				namedarg.addMapEntryExpression(new ConstantExpression(
-						"nullable"), new ConstantExpression(true));
+				namedarg.addMapEntryExpression(new ConstantExpression("nullable"), new ConstantExpression(true));
 				MethodCallExpression constExpr = new MethodCallExpression(
-						VariableExpression.THIS_EXPRESSION,
-						new ConstantExpression(fieldName), namedarg);
+					VariableExpression.THIS_EXPRESSION,
+					new ConstantExpression(fieldName),
+					namedarg
+					);
 				block.addStatement(new ExpressionStatement(constExpr));
-				// System.out.println(classNode.getName() +
-				// " - Added nullabel constraint for "+ fieldName);
+				//System.out.println(classNode.getName() + " - Added nullabel constraint for "+ fieldName);
 			}
 		}
-		// System.out.println(block.toString());
+		//System.out.println(block.toString());
 	}
 
-	public boolean hasFieldInClosure(FieldNode closure, String fieldName) {
-		if (closure != null) {
-			ClosureExpression exp = (ClosureExpression) closure
-					.getInitialExpression();
+
+
+	public boolean hasFieldInClosure(FieldNode closure, String fieldName){
+		if(closure != null){
+			ClosureExpression exp = (ClosureExpression) closure.getInitialExpression();
 			BlockStatement block = (BlockStatement) exp.getCode();
 			List<Statement> ments = block.getStatements();
-			for (Statement expstat : ments) {
-				if (expstat instanceof ExpressionStatement
-						&& ((ExpressionStatement) expstat).getExpression() instanceof MethodCallExpression) {
-					MethodCallExpression methexp = (MethodCallExpression) ((ExpressionStatement) expstat)
-							.getExpression();
-					ConstantExpression conexp = (ConstantExpression) methexp
-							.getMethod();
-					if (conexp.getValue().equals(fieldName)) {
+			for(Statement expstat : ments){
+				if(expstat instanceof ExpressionStatement && ((ExpressionStatement)expstat).getExpression() instanceof MethodCallExpression){
+					MethodCallExpression methexp = (MethodCallExpression)((ExpressionStatement)expstat).getExpression();
+					ConstantExpression conexp = (ConstantExpression)methexp.getMethod();
+					if(conexp.getValue().equals(fieldName)){
 						return true;
 					}
 				}
@@ -209,50 +135,100 @@ public class AuditStampASTTransformation implements ASTTransformation {
 		return false;
 	}
 
+
 	static public String getContents(File aFile) {
-		// ...checks on aFile are elided
+		//...checks on aFile are elided
 		StringBuilder contents = new StringBuilder();
 
 		try {
-			// use buffering, reading one line at a time
-			// FileReader always assumes default encoding is OK!
-			BufferedReader input = new BufferedReader(new FileReader(aFile));
+			//use buffering, reading one line at a time
+			//FileReader always assumes default encoding is OK!
+			BufferedReader input =  new BufferedReader(new FileReader(aFile));
 			try {
-				String line = null;
-				while ((line = input.readLine()) != null) {
+				String line = null; 
+				while (( line = input.readLine()) != null){
 					contents.append(line);
 					contents.append(System.getProperty("line.separator"));
 				}
-			} finally {
+			}
+			finally {
 				input.close();
 			}
-		} catch (IOException ex) {
+		}
+		catch (IOException ex){
 			ex.printStackTrace();
 		}
 
 		return contents.toString();
 	}
 
-	@SuppressWarnings("rawtypes")
 	static public Object getMap(Map configMap, String keypath) {
 		String keys[] = keypath.split("\\.");
 		Map map = configMap;
-		for (String key : keys) {
+		for(String key : keys){
 			Object val = map.get(key);
-			if (val != null) {
-				// System.out.println("got a key for are " +key);
-				if (val instanceof Map) {
-					map = (Map) map.get(key);
-				} else {
+			if(val !=null){
+				//System.out.println("got a key for are " +key);
+				if(val instanceof Map){
+					map = (Map)map.get(key);
+				} else{
 					return val;
 				}
-			} else {
+			}else{
 				return null;
 			}
 		}
-		return map;
+		return map;	
 	}
 
+	//old but kept for reference
+	/*
+	public void addTableAndIdMapping(ClassNode classNode){
+		FieldNode closure = classNode.getDeclaredField("mapping");
+
+		if(closure!=null){
+			boolean hasTable=hasFieldInClosure(closure,"table");
+			boolean hasId=hasFieldInClosure(closure,"id");
+
+			ClosureExpression exp = (ClosureExpression)closure.getInitialExpression();
+			BlockStatement block = (BlockStatement) exp.getCode();
+
+			//this just adds an s to the class name for the table if its not specified 
+			Boolean pluralize = (Boolean)getMap(CO,"stamp.mapping.pluralTable");
+			if(!hasTable && pluralize!=null && pluralize){
+				String tablename = GrailsClassUtils.getShortName(classNode.getName())+"s";
+				//LOG.info("Added new mapping to assign table: " + tablename);
+				MethodCallExpression tableMeth = new MethodCallExpression(
+					VariableExpression.THIS_EXPRESSION,
+					new ConstantExpression("table"),
+					new ArgumentListExpression(new ConstantExpression(tablename)) 
+					);
+				//block = (BlockStatement) exp.getCode();
+				block.addStatement(new ExpressionStatement(tableMeth));
+				//System.out.println(classNode.getName()+" - Added table mapping " + tablename );
+			}
+			//This adds the ID generator that we use for domian classes
+			Map tableconf = (Map)getMap(CO,"stamp.mapping.id");
+			if(!hasId && tableconf!=null){
+				NamedArgumentListExpression namedarg = new NamedArgumentListExpression();
+				if(tableconf.get("column") != null){
+					namedarg.addMapEntryExpression(new ConstantExpression("column"), new ConstantExpression(tableconf.get("column").toString()));
+				}
+				if(tableconf.get("generator") != null){
+					namedarg.addMapEntryExpression(new ConstantExpression("generator"), new ConstantExpression(tableconf.get("generator").toString()));
+				}
+				MethodCallExpression tableMeth = new MethodCallExpression(
+					VariableExpression.THIS_EXPRESSION,
+					new ConstantExpression("id"),
+					namedarg
+					);
+				//block = (BlockStatement) exp.getCode();
+				block.addStatement(new ExpressionStatement(tableMeth));
+				//System.out.println(classNode.getName() + " - Added ID mapping with "+ tableconf);
+			}
+		}
+		*/
+		//System.out.println(block.toString());
 }
 
 
@@ -327,3 +303,4 @@ org.codehaus.groovy.ast.stmt.BlockStatement@f4b2da[
 
 
 */
+

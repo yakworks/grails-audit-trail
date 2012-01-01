@@ -1,91 +1,110 @@
 package nineci.hibernate //grails.plugin.audittrail
 import org.hibernate.EmptyInterceptor
 import org.hibernate.type.Type
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.apache.log4j.Logger
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
+import org.springframework.context.ApplicationContextAware
+import org.springframework.context.ApplicationContext
 
-
-class AuditTrailInterceptor extends EmptyInterceptor {
+class AuditTrailInterceptor extends EmptyInterceptor implements ApplicationContextAware{
 	private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
-	static final Properties CONF = ConfigurationHolder.config.toProperties()
-	static final String CREATED_BY = CONF.getProperty("stamp.audit.createdBy")
-	static final String EDITED_BY = CONF.getProperty("stamp.audit.editedBy")
-	static final String EDITED_DATE = CONF.getProperty("stamp.audit.editedDate")
-	static final String CREATED_DATE = CONF.getProperty("stamp.audit.createdDate")
-	static final String COMPANY_ID = CONF.getProperty("stamp.audit.companyId","companyId")
+	//injected
+	def grailsApplication
+	def currentUserClosure
+	String createdByField
+	String editedByField
+	String editedDateField
+	String createdDateField
+	String companyIdField
+
+	ApplicationContext applicationContext
+
 	static Long ANONYMOUS_USER = 0
 
 	boolean onFlushDirty(Object entity, Serializable id, Object[] currentState,Object[] previousState, String[] propertyNames,Type[] types) {
 		def metaClass = entity.metaClass
-		MetaProperty property = metaClass.hasProperty(entity, EDITED_DATE)
+		MetaProperty property = metaClass.hasProperty(entity, editedDateField)
 		List fieldList = propertyNames.toList()
-		
+	
 		if(property) {
 			def now = property.getType().newInstance([System.currentTimeMillis()] as Object[] )
-			setValue(currentState, fieldList, EDITED_DATE, now)
+			setValue(currentState, fieldList, editedDateField, now)
 		}
-		property = metaClass.hasProperty(entity,EDITED_BY)
+		property = metaClass.hasProperty(entity,editedByField)
 		if(property) {
-			setValue(currentState, fieldList, EDITED_BY, getUserID())
+			setValue(currentState, fieldList, editedByField, getUserID())
 		}
 		return true
 	}
 
-  boolean onSave(Object entity, Serializable id, Object[] state,String[] propertyNames, Type[] types) {
+	boolean onSave(Object entity, Serializable id, Object[] state,String[] propertyNames, Type[] types) {
 	 	def metaClass = entity.metaClass
-		MetaProperty property = metaClass.hasProperty(entity, CREATED_DATE)
+		MetaProperty property = metaClass.hasProperty(entity, createdDateField)
 		def time = System.currentTimeMillis()
 		List fieldList = propertyNames.toList()
-		Long userId = getUserID()
+		def userId = getUserID()
 		
 		if(property) {
 			def now = property.getType().newInstance([time] as Object[] )
-			setValue(state, fieldList, CREATED_DATE, now)
+			setValue(state, fieldList, createdDateField, now)
 		}
-		property = metaClass.hasProperty(entity,EDITED_DATE)
+		property = metaClass.hasProperty(entity,editedDateField)
 		if(property) {
 			def now = property.getType().newInstance([time] as Object[] )
-			setValue(state, fieldList, EDITED_DATE, now)
+			setValue(state, fieldList, editedDateField, now)
 		}
-		property = metaClass.hasProperty(entity,EDITED_BY)
+		property = metaClass.hasProperty(entity,editedByField)
 		if(property) {
-			setValue(state, fieldList, EDITED_BY, userId)
+			setValue(state, fieldList, editedByField, userId)
 		}
-		property = metaClass.hasProperty(entity,CREATED_BY)
+		property = metaClass.hasProperty(entity,createdByField)
 		if(property) {
-			setValue(state, fieldList, CREATED_BY, userId)
+			setValue(state, fieldList, createdByField, userId)
 		}
-		property = metaClass.hasProperty(entity,COMPANY_ID)
-		def authPrincipal = SCH.context.authentication?.principal
-		if(property && authPrincipal && authPrincipal != "anonymousUser") {
-			def curvalue = entity."$COMPANY_ID"
-			if(curvalue==null || curvalue==0){ //only update if its 0 or null
-				setValue(state, fieldList, COMPANY_ID, getCompanyId(authPrincipal))
+		property = metaClass.hasProperty(entity,companyIdField)
+		
+		if(property) {
+			def curvalue = entity."$companyIdField"
+			if(curvalue==null || curvalue==0 && userGoodForCompanyId() ){ //only update if its 0 or null
+				setValue(state, fieldList, companyIdField, getCompanyId())
 			}
 		}
     	return true
-  }
+  	}
 
-  def setValue(Object[] currentState, List fieldList, String propertyToSet, Object value) {
-    int index = fieldList.indexOf(propertyToSet)
-    if (index >= 0) {
-      currentState[index] = value
-    }
-  }
+	def setValue(Object[] currentState, List fieldList, String propertyToSet, Object value) {
+		int index = fieldList.indexOf(propertyToSet)
+		if (index >= 0) {
+			currentState[index] = value
+		}
+	}
 
-	Long getUserID() {
-		def authPrincipal = SCH.context.authentication?.principal
+	def getUserID() {
+		def userClos = currentUserClosure?:getSpringSecurityUser
+		return userClos(applicationContext)
+	}
+	
+	def getSpringSecurityUser = { ctx ->
+		def authPrincipal = ctx.springSecurityService.principal
 		// Added check for error coming while creating new company
 		if(authPrincipal && authPrincipal != "anonymousUser"){
 			return authPrincipal.id
 		} else {
-			return ANONYMOUS_USER
+			return 0 //fall back
 		}
 	}
 	
-	Long getCompanyId(authPrincipal) {
-		return authPrincipal.hasProperty('companyId')?authPrincipal.companyId:0
+	def userGoodForCompanyId(){
+		def authPrincipal = applicationContext.springSecurityService.principal
+		if(authPrincipal && authPrincipal != "anonymousUser"){
+			return true
+		}else{
+			return false
+		}
+	}
+	
+	Long getCompanyId() {
+		def authPrincipal = applicationContext.springSecurityService.principal
+		return authPrincipal.hasProperty(companyIdField)?authPrincipal.companyId:0
 	}
 }
 
