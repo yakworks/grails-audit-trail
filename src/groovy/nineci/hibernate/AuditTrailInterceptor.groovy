@@ -4,107 +4,68 @@ import org.hibernate.type.Type
 import org.apache.log4j.Logger
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationContext
+import org.springframework.beans.factory.InitializingBean
+import org.apache.commons.lang.ArrayUtils
 
-class AuditTrailInterceptor extends EmptyInterceptor implements ApplicationContextAware{
+class AuditTrailInterceptor extends EmptyInterceptor {
 	private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
+	
 	//injected
-	def grailsApplication
-	def currentUserClosure
-	String createdByField
-	String editedByField
-	String editedDateField
-	String createdDateField
-	String companyIdField
-
-	ApplicationContext applicationContext
-
-	static Long ANONYMOUS_USER = 0
+	AuditTrailHelper auditTrailHelper
+	Map fieldPropsMap	
 
 	boolean onFlushDirty(Object entity, Serializable id, Object[] currentState,Object[] previousState, String[] propertyNames,Type[] types) {
-		def metaClass = entity.metaClass
-		MetaProperty property = metaClass.hasProperty(entity, editedDateField)
-		List fieldList = propertyNames.toList()
-	
+
+		String field = fieldPropsMap.get("editedDate").name
+		MetaProperty property = entity.metaClass.hasProperty(entity, field)
 		if(property) {
 			def now = property.getType().newInstance([System.currentTimeMillis()] as Object[] )
-			setValue(currentState, fieldList, editedDateField, now)
+			setValue(currentState, propertyNames, fieldPropsMap.get("editedDate").name, now)
 		}
-		property = metaClass.hasProperty(entity,editedByField)
+		field = fieldPropsMap.get("editedBy").name
+		property = entity.metaClass.hasProperty(entity,field)
 		if(property) {
-			setValue(currentState, fieldList, editedByField, getUserID())
+			setValue(currentState, propertyNames, field, auditTrailHelper.currentUserId())
 		}
 		return true
 	}
 
 	boolean onSave(Object entity, Serializable id, Object[] state,String[] propertyNames, Type[] types) {
-	 	def metaClass = entity.metaClass
-		MetaProperty property = metaClass.hasProperty(entity, createdDateField)
 		def time = System.currentTimeMillis()
-		List fieldList = propertyNames.toList()
-		def userId = getUserID()
 		
-		if(property) {
-			def now = property.getType().newInstance([time] as Object[] )
-			setValue(state, fieldList, createdDateField, now)
+		['createdDate','editedDate','createdBy','editedBy'].each{ key->
+			def field = fieldPropsMap.get(key).name
+			def property = entity.metaClass.hasProperty(entity, field)
+			if(property) {
+				def valToSet
+				if(field == 'createdDate' || field == 'editedDate'){
+					valToSet =  property.getType().newInstance([time] as Object[] )
+				}else{
+					valToSet = auditTrailHelper.currentUserId()
+				}
+				setValue(state, propertyNames, field, valToSet)
+			}
 		}
-		property = metaClass.hasProperty(entity,editedDateField)
-		if(property) {
-			def now = property.getType().newInstance([time] as Object[] )
-			setValue(state, fieldList, editedDateField, now)
-		}
-		property = metaClass.hasProperty(entity,editedByField)
-		if(property) {
-			setValue(state, fieldList, editedByField, userId)
-		}
-		property = metaClass.hasProperty(entity,createdByField)
-		if(property) {
-			setValue(state, fieldList, createdByField, userId)
-		}
-		property = metaClass.hasProperty(entity,companyIdField)
-		
-		if(property) {
-			def curvalue = entity."$companyIdField"
-			if(curvalue==null || curvalue==0 && userGoodForCompanyId() ){ //only update if its 0 or null
-				setValue(state, fieldList, companyIdField, getCompanyId())
+
+		String companyIdField = auditTrailHelper.companyIdField
+		if(companyIdField){
+			def property = entity.metaClass.hasProperty(entity,companyIdField)
+			if(property) {
+				def curvalue = entity."$companyIdField"
+				if(curvalue==null || curvalue==0 && auditTrailHelper.userGoodForCompanyId() ){ //only update if its 0 or null
+					setValue(state, propertyNames, companyIdField, auditTrailHelper.getCompanyId())
+				}
 			}
 		}
     	return true
   	}
 
-	def setValue(Object[] currentState, List fieldList, String propertyToSet, Object value) {
-		int index = fieldList.indexOf(propertyToSet)
+	def setValue(Object[] currentState, String[] propertyNames, String propertyToSet, Object value) {
+		int index = ArrayUtils.indexOf(propertyNames, propertyToSet)  //fieldList.indexOf(propertyToSet)
 		if (index >= 0) {
 			currentState[index] = value
 		}
 	}
 
-	def getUserID() {
-		def userClos = currentUserClosure?:getSpringSecurityUser
-		return userClos(applicationContext)
-	}
-	
-	def getSpringSecurityUser = { ctx ->
-		def authPrincipal = ctx.springSecurityService.principal
-		// Added check for error coming while creating new company
-		if(authPrincipal && authPrincipal != "anonymousUser"){
-			return authPrincipal.id
-		} else {
-			return 0 //fall back
-		}
-	}
-	
-	def userGoodForCompanyId(){
-		def authPrincipal = applicationContext.springSecurityService.principal
-		if(authPrincipal && authPrincipal != "anonymousUser"){
-			return true
-		}else{
-			return false
-		}
-	}
-	
-	Long getCompanyId() {
-		def authPrincipal = applicationContext.springSecurityService.principal
-		return authPrincipal.hasProperty(companyIdField)?authPrincipal.companyId:0
-	}
 }
 

@@ -13,7 +13,14 @@ import org.junit.*
 class TestDomainTests {
 
     void testSomething() {
-//       fail "Implement me"
-		assert true
+		def data = new TestDomain()
+		assert TestDomain.constraints
+		
+		assert 0 == data.companyId
+
+		['createdDate','editedDate','createdBy','updatedBy'].each{key->
+			assert data.metaClass.hasProperty(data,key)
+		}
+		assert data.metaClass.hasProperty(data,"constraints")
     }
 }

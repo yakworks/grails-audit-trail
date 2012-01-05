@@ -26,7 +26,7 @@ import static grails.util.Environment.*
 
 
 grails.gorm.default.mapping = {
-	id column: 'OID', generator:'nineci.hibernate.NewObjectIdGenerator'
+	id column: 'OID', generator:'native'
 }
 
 // Added by the Spring Security Core plugin:
@@ -41,15 +41,16 @@ grails{
 			createdBy.type   = "java.lang.Long" //fully qualified class name if not a java.lang.(String,Long,etc..)
 			
 			createdDate{
-				field = "createdDate"
-				type  = "java.util.Date"
-				constraints = "nullable:true"
-				mapping = "column: 'date_created'"
+				field = "createdDate" //
+				type  = "java.util.Date" //the class name type
 			}
 			//Will try a joda time on this one
 			editedDate.field  = "editedDate"//date edited
 			
 			editedBy.field  = "updatedBy" //id who updated/edited
+			editedBy.type   = "java.lang.Long" //fully qualified class name if not a java.lang.(String,Long,etc..)
+			editedBy.constraints = "nullable:true, max:90000l"
+			editedBy.mapping = "column: 'whoUpdated'"
 			
 			companyId.field   = "companyId" //used for multi-tenant apps
 		}

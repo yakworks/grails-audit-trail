@@ -1,8 +1,9 @@
+import gorm.*
 
 class AuditTrailGrailsPlugin {
     // the plugin version
-    def version = "1.2.1"
-    def grailsVersion = "1.3 > *"
+    def version = "2.0.0"
+    def grailsVersion = "1.3.6 > *"
 
     def author = "Joshua Burnett"
     def authorEmail = "joshua@greenbill.com"
@@ -20,6 +21,7 @@ class AuditTrailGrailsPlugin {
 		'grails-app/domain/**',
 		'grails-app/controllers/**',
 		'grails-app/conf/*Config*',
+		'src/groovy/nine/tests/**',
 		"web-app/**/*"
     ]
 
@@ -28,16 +30,19 @@ class AuditTrailGrailsPlugin {
 	def doWithSpring = {
 
 		def cfg = application.config.grails.plugin.audittrail
-		//eventTriggeringInterceptor(AuditStampInterceptor)
-		entityInterceptor(nineci.hibernate.AuditTrailInterceptor){
+		def fprops = FieldProps.buildFieldMap(application.config)
+
+		auditTrailHelper(nineci.hibernate.AuditTrailHelper){
 			grailsApplication = ref("grailsApplication")
-			createdByField = cfg.createdBy.field?:null
-			editedByField = cfg.editedBy.field?:null
-			editedDateField = cfg.editedDate.field?:null
-			createdDateField = cfg.createdDate.field?:null
+			fieldPropsMap = fprops
 			companyIdField = cfg.companyId.field?:null
-			currentUserClosure = cfg.currentUserClosure?:null
-		} 
+		}
+		
+		entityInterceptor(nineci.hibernate.AuditTrailInterceptor){
+			auditTrailHelper = ref("auditTrailHelper")
+			fieldPropsMap = fprops
+		}
+		
 	}
 
     def doWithDynamicMethods = { ctx ->
@@ -52,13 +57,5 @@ class AuditTrailGrailsPlugin {
         
     }
 
-	def getFieldNames(application){
-		def cfg = application.config.grails.plugin.audittrail
-		//try old way
-		if(!cfg){
-			cfg = application.config.stamp.audit
-		}
-		return cfg.flatten()
-	}
 
 }

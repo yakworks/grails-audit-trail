@@ -9,7 +9,17 @@ class TestDomain {
 
 	Long companyId = 0
 
-	static mapping={ table 'TestDomains' } //note you have to declare this or AuditStamp won't add anything
+	static mapping={ 
+		table 'TestDomains' 
+	} 
+	
+	// def beforeValidate() {
+	// 	println 'in validate'
+	// } 
+/*	static constraints = { ->
+		createdDate nullable:true
+	}*/ 
 
-	static constraints = { } //note you have to declare this or AuditStamp won't add anything
+	
+	
 }

@@ -12,12 +12,22 @@ import org.apache.commons.lang.time.DateUtils
 class AuditStampTests extends BaseInt {
 	def sessionFactory
 	def dataSource
+	def grailsApplication
 
 	void setUp() {
 		super.setUp();
 	}
 	
-
+	void test_constraints(){
+		def art = grailsApplication.getDomainClass("nine.tests.TestDomain")
+		assert art
+		assert art.constraints.editedDate.getAppliedConstraint('nullable').isNullable()  == false
+		assert art.constraints.createdDate.getAppliedConstraint('nullable').isNullable()  == false
+		assert art.constraints.updatedBy.getAppliedConstraint('nullable').isNullable()  == true
+		assert art.constraints.updatedBy.getAppliedConstraint('max').maxValue  == 90000l
+		//def prop= art.getPropertyByName("updatedBy") 
+	}
+	
 	void testCreateEditInsert() {
 		def dom = new TestDomain(name:"blah")
 		if( !dom.save(flush:true) ) {
@@ -27,7 +37,7 @@ class AuditStampTests extends BaseInt {
 		}
 		assertNotNull(dom.id);
 		def sql = new Sql(dataSource);
-		def sqlCall = 'select oid, companyId,createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = ' + dom.id
+		def sqlCall = 'select oid, companyId,createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
 		println sqlCall
 		//def data = hibSession.createSQLQuery(sqlCall).uniqueResult();
 		def data = sql.firstRow(sqlCall)
@@ -38,7 +48,7 @@ class AuditStampTests extends BaseInt {
 		assertNotNull(data.editedDate)
 		assertTrue DateUtils.isSameDay(data.createdDate, new Date())
 		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
-		assertEquals(authUser.id, data.updatedBy)
+		assertEquals(authUser.id, data.whoUpdated)
 		assertEquals(authUser.id, data.createdBy)
 	}
 	
@@ -47,7 +57,7 @@ class AuditStampTests extends BaseInt {
 		assert dom.save(flush:true)
 		
 		def sql = new Sql(dataSource);
-		def sqlCall = 'select oid, companyId,createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = ' + dom.id
+		def sqlCall = 'select oid, companyId,createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
 
 		def data = sql.firstRow(sqlCall)
 		assertNotNull(data)
@@ -60,7 +70,7 @@ class AuditStampTests extends BaseInt {
 		java.sql.Date yesterdaySQL = new java.sql.Date(yesterday.getTime())
 		def sql = new Sql(sessionFactory.getCurrentSession().connection())
 		
-		sql.execute("insert into TestDomains (oid,version,companyId,name, createdBy, createdDate, updatedBy, editedDate) "+
+		sql.execute("insert into TestDomains (oid,version,companyId,name, createdBy, createdDate, whoUpdated, editedDate) "+
 		  " values (?,?,?,?,?,?,?,?)", [2,0,5,"xxx", 0,yesterdaySQL,0,yesterdaySQL])
 		
 		
@@ -73,14 +83,14 @@ class AuditStampTests extends BaseInt {
 			}
 		}
 		
-		def sqlCall = 'select oid, createdBy, createdDate, updatedBy, editedDate from TestDomains where oid = ' + dom.id
+		def sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
 		println sqlCall
 		def data = sql.firstRow(sqlCall)
 		assertNotNull(data)
 		assertEquals(dom.id, data.oid)
 		assertNotNull(data.editedDate)
 		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
-		assertEquals(authUser.id, data.updatedBy)
+		assertEquals(authUser.id, data.whoUpdated)
 	}
 /*
 	// Test for checking if ArDocDetail is dirty when we fetch arDocDetails from arDoc
