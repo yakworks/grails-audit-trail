@@ -38,7 +38,7 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 			def property = entity.metaClass.hasProperty(entity, field)
 			if(property) {
 				def valToSet
-				if(field == 'createdDate' || field == 'editedDate'){
+				if(key == 'createdDate' || key == 'editedDate'){
 					valToSet =  property.getType().newInstance([time] as Object[] )
 				}else{
 					valToSet = auditTrailHelper.currentUserId()
