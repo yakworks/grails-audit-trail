@@ -42,8 +42,9 @@ class FieldProps {
 		}else{
 		 	newField.constraints = (String)co.get(baseKey+ ".constraints");
 		}
-		newField.constraints = (String)co.get(baseKey+ ".constraints");
-		newField.mapping = (String)co.get(baseKey + ".mapping");
+		if(co.containsKey(baseKey+ ".mapping") ){
+		    newField.mapping = (String)co.get(baseKey + ".mapping");
+		}
 		
 		return newField;
     } 

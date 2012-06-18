@@ -2,7 +2,7 @@ import gorm.*
 
 class AuditTrailGrailsPlugin {
     // the plugin version
-    def version = "2.0.0"
+    def version = "2.0.1"
     def grailsVersion = "1.3.6 > *"
 
     def author = "Joshua Burnett"

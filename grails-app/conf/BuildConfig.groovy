@@ -19,18 +19,19 @@ grails.project.dependency.resolution = {
 
     }
     dependencies {
-		if(grailsVersion != "2.0.0"){
+		if("$grailsVersion" < "2.0.0"){
 			runtime('com.h2database:h2:1.2.147'){ export = false }
 		}
     }
 
     plugins {
-        build(":tomcat:$grailsVersion",":release:1.0.0",":svn:1.0.1") {
+        build(":tomcat:$grailsVersion",":release:2.0.3") {
             export = false
         }
 		compile (":hibernate:$grailsVersion"){
 			export = false
 		}
+		
 		compile (':spring-security-core:1.2.6'){
 			export = false
 		}
