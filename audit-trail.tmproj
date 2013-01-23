@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>test/projects/joda/grails-app/conf/BuildConfig.groovy</string>
+	<string>src/groovy/nineci/hibernate/AuditTrailHelper.groovy</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -16,7 +16,7 @@
 			<key>filename</key>
 			<string>README.md</string>
 			<key>lastUsed</key>
-			<date>2012-01-08T00:08:45Z</date>
+			<date>2013-01-14T02:45:39Z</date>
 		</dict>
 		<dict>
 			<key>filename</key>
@@ -114,14 +114,132 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>2</integer>
+				<integer>20</integer>
 				<key>line</key>
-				<integer>26</integer>
+				<integer>53</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>26</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>6</integer>
+				<key>line</key>
+				<integer>53</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>20</integer>
+				<key>line</key>
+				<integer>53</integer>
+			</dict>
+		</dict>
+		<key>grails-app/conf/Config.groovy</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>31</integer>
+				<key>line</key>
+				<integer>18</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
+			<integer>5</integer>
+		</dict>
+		<key>grails-app/domain/nine/tests/ValDirty.groovy</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>19</integer>
+				<key>line</key>
+				<integer>9</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
 			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>5</integer>
+				<key>line</key>
+				<integer>9</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>19</integer>
+				<key>line</key>
+				<integer>9</integer>
+			</dict>
+		</dict>
+		<key>src/groovy/nineci/hibernate/AuditTrailHelper.groovy</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>16</integer>
+				<key>line</key>
+				<integer>31</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>13</integer>
+		</dict>
+		<key>src/groovy/nineci/hibernate/AuditTrailInterceptor.groovy</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>26</integer>
+				<key>line</key>
+				<integer>33</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>6</integer>
+		</dict>
+		<key>src/java/gorm/AuditStampASTTransformation.java</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>51</integer>
+				<key>line</key>
+				<integer>80</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>48</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>44</integer>
+				<key>line</key>
+				<integer>80</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>60</integer>
+				<key>line</key>
+				<integer>80</integer>
+			</dict>
 		</dict>
 		<key>test/projects/joda/application.properties</key>
 		<dict>
@@ -258,7 +376,12 @@
 	<array>
 		<string>AuditTrailGrailsPlugin.groovy</string>
 		<string>README.md</string>
+		<string>grails-app/domain/nine/tests/ValDirty.groovy</string>
 		<string>test/projects/joda/grails-app/conf/BuildConfig.groovy</string>
+		<string>grails-app/conf/Config.groovy</string>
+		<string>src/groovy/nineci/hibernate/AuditTrailInterceptor.groovy</string>
+		<string>src/groovy/nineci/hibernate/AuditTrailHelper.groovy</string>
+		<string>src/java/gorm/AuditStampASTTransformation.java</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>

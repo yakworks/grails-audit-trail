@@ -77,15 +77,23 @@ public class AuditStampASTTransformation implements ASTTransformation {
 		}
 		// System.out.println(mn.toString());
 		// System.out.println(mn.getCode());
-		String configStr = "org.codehaus.groovy.grails.commons.ApplicationHolder.application.mainContext" +
-			".getBean('auditTrailHelper').initializeFields(this)";
-		
+		// String configStr = "println '1 in validate'; println '2 in validate'; "+
+		// 	"def ctx = org.codehaus.groovy.grails.commons.ApplicationHolder.application?.mainContext; " +
+		// 	"if(ctx) { \n"+
+		// 	"  println \"ctx NOT null, calling initializeFields\"\n"+
+		// 	"  ctx.getBean('auditTrailHelper').initializeFields(this) \n" +
+		// 	"} else { \n" +
+		// 	"  println \"ctx is null\" \n" +
+		// 	"}"
+		// 	;
+		String configStr = "domainClass?.grailsApplication?.mainContext?.auditTrailHelper?.initializeFields(this) ";
 		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0); 
 		
-		ReturnStatement returnStatement = (ReturnStatement) newConfig.getStatements().get(0);
-		ExpressionStatement exStatment = new ExpressionStatement(returnStatement.getExpression());
+		//ExpressionStatement exStatment = (ExpressionStatement) newConfig.getStatements().get(0);
+		//ExpressionStatement exStatment = new ExpressionStatement(returnStatement.getExpression());
 		BlockStatement block = (BlockStatement) mn.getCode();
-		block.addStatement(exStatment);
+		//System.out.println(block);
+		block.addStatement(newConfig.getStatements().get(0));
 		//System.out.println(block);
 	}
 	

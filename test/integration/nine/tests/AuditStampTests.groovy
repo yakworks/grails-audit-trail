@@ -30,11 +30,7 @@ class AuditStampTests extends BaseInt {
 	
 	void testCreateEditInsert() {
 		def dom = new TestDomain(name:"blah")
-		if( !dom.save(flush:true) ) {
-			dom.errors.each {
-				println it
-			}
-		}
+		dom.save(flush:true,failOnError:true)
 		assertNotNull(dom.id);
 		def sql = new Sql(dataSource);
 		def sqlCall = 'select oid, companyId,createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
@@ -54,7 +50,7 @@ class AuditStampTests extends BaseInt {
 	
 	void testCreateEditInsert_with_companyId() {
 		def dom = new TestDomain(name:"blah2",companyId:7)
-		assert dom.save(flush:true)
+		assert dom.save(flush:true,failOnError:true)
 		
 		def sql = new Sql(dataSource);
 		def sqlCall = 'select oid, companyId,createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
@@ -77,11 +73,7 @@ class AuditStampTests extends BaseInt {
 		def dom = TestDomain.get(2)
 		assertNotNull(dom);
 		dom.name="new name"
-		if( !dom.save(flush:true) ) {
-			dom.errors.each {
-				println it
-			}
-		}
+		dom.save(flush:true,failOnError:true)
 		
 		def sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
 		println sqlCall

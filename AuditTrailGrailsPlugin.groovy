@@ -2,7 +2,7 @@ import gorm.*
 
 class AuditTrailGrailsPlugin {
     // the plugin version
-    def version = "2.0.1"
+    def version = "2.0.2"
     def grailsVersion = "1.3.6 > *"
 
     def author = "Joshua Burnett"
@@ -11,7 +11,7 @@ class AuditTrailGrailsPlugin {
     def description = 'provides an annotation and hibernate events to take care of audit trail stamping for your gorm objects'
 	def license = "APACHE"
 	def organization = [ name: "9ci", url: "http://www.9ci.com/" ]
-	def developers = [ [ name: "Konstantinos Kostarellis", email: "kosta.grails@gmail.com" ]]
+	def developers = [ [ name: "Joshua Burnet", email: "joshua@greenbill.com" ]]
 	def issueManagement = [ system: "github", url: "https://github.com/9ci/grails-audit-trail/issues" ]
 	def scm = [ url: "https://github.com/9ci/grails-audit-trail" ]
     def documentation = "http://grails.org/AuditTrail+Plugin"
