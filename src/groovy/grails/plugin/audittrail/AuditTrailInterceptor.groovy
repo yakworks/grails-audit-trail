@@ -1,4 +1,5 @@
-package nineci.hibernate //grails.plugin.audittrail
+package grails.plugin.audittrail
+
 import org.hibernate.EmptyInterceptor
 import org.hibernate.type.Type
 import org.apache.log4j.Logger

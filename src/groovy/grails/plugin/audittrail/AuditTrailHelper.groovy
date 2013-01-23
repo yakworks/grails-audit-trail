@@ -1,4 +1,5 @@
-package nineci.hibernate //grails.plugin.audittrail
+package grails.plugin.audittrail 
+
 import org.hibernate.EmptyInterceptor
 import org.hibernate.type.Type
 import org.apache.log4j.Logger
@@ -22,12 +23,26 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 		if(log.isDebugEnabled()) log.debug "in beforeValidateInit for $entity"
 		//if its not new then just exit as we will assume an updated entity is setup correctly
 		if(!isNewEntity(entity)) return
-		 
-		def time = System.currentTimeMillis()
-		//assume its a new entity
+		
+		setFieldDefaults(entity)
+		
+		if(companyIdField){
+			def property = entity.metaClass.hasProperty(entity,companyIdField)
+			if(property) {
+				def curvalue = entity.getProperty(companyIdField)
+				if(curvalue==null || curvalue==0 && isUserAuthorized() ){ //only update if its 0 or null
+					entity.setProperty(companyIdField,getCompanyId())
+				}
+			}
+		}
+	}
+	
+	void setFieldDefaults(Object entity){
+	    def time = System.currentTimeMillis()
+	    //assume its a new entity
 		['createdDate','editedDate','createdBy','editedBy'].each{ key->
 			def field = fieldPropsMap.get(key).name
-			def property = entity.metaClass.hasProperty(entity, field)
+			def property = entity.hasProperty(field)
 			if(property) {
 				def valToSet
 				if(key == 'createdDate' || key == 'editedDate'){
@@ -36,16 +51,6 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 					valToSet = currentUserId()
 				}
 				entity.setProperty(field,valToSet)
-			}
-		}
-
-		if(companyIdField){
-			def property = entity.metaClass.hasProperty(entity,companyIdField)
-			if(property) {
-				def curvalue = entity.getProperty(companyIdField)
-				if(curvalue==null || curvalue==0 && isUserAuthorized() ){ //only update if its 0 or null
-					entity.setProperty(companyIdField,getCompanyId())
-				}
 			}
 		}
 	}
@@ -105,6 +110,17 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 			currentUserClosure = getSpringSecurityUser
 		}
 
+	}
+	
+	/**
+	 * mocks this out for a unit test
+	 */
+	static mockForUnitTest(config){
+	    def testHelper = new AuditTrailHelper()
+	    testHelper.fieldPropsMap = gorm.FieldProps.buildFieldMap(config)
+		testHelper.currentUserClosure = {ctx -> 1 }
+		testHelper.metaClass.initializeFields = {Object entity -> testHelper.setFieldDefaults(entity) }
+		return testHelper
 	}
 }
 

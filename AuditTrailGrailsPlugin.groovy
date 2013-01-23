@@ -2,7 +2,7 @@ import gorm.*
 
 class AuditTrailGrailsPlugin {
     // the plugin version
-    def version = "2.0.2"
+    def version = "2.0.3"
     def grailsVersion = "1.3.6 > *"
 
     def author = "Joshua Burnett"
@@ -32,13 +32,13 @@ class AuditTrailGrailsPlugin {
 		def cfg = application.config.grails.plugin.audittrail
 		def fprops = FieldProps.buildFieldMap(application.config)
 
-		auditTrailHelper(nineci.hibernate.AuditTrailHelper){
+		auditTrailHelper(grails.plugin.audittrail.AuditTrailHelper){
 			grailsApplication = ref("grailsApplication")
 			fieldPropsMap = fprops
 			companyIdField = cfg.companyId.field?:null
 		}
 		
-		entityInterceptor(nineci.hibernate.AuditTrailInterceptor){
+		entityInterceptor(grails.plugin.audittrail.AuditTrailInterceptor){
 			auditTrailHelper = ref("auditTrailHelper")
 			fieldPropsMap = fprops
 		}

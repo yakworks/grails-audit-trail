@@ -69,6 +69,11 @@ public class AuditStampASTTransformation implements ASTTransformation {
 	}
 	
 	public void doBeforeValidate(ClassNode classNode){
+		//add the field for service injection of auditTrailHelper
+		// FieldNode auditTrailHelperField = new FieldNode(name, ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null); 
+		// classNode.addField(auditTrailHelperField);
+		classNode.addProperty("auditTrailHelper", ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), null, null, null);
+		
 		MethodNode mn = classNode.getMethod("beforeValidate", Parameter.EMPTY_ARRAY);
 		if(mn == null){
 			classNode.addMethod("beforeValidate", Modifier.PUBLIC, ClassHelper.OBJECT_TYPE, Parameter.EMPTY_ARRAY, null, new BlockStatement());
@@ -86,7 +91,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 		// 	"  println \"ctx is null\" \n" +
 		// 	"}"
 		// 	;
-		String configStr = "domainClass?.grailsApplication?.mainContext?.auditTrailHelper?.initializeFields(this) ";
+		String configStr = "auditTrailHelper?.initializeFields(this) ";
 		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0); 
 		
 		//ExpressionStatement exStatment = (ExpressionStatement) newConfig.getStatements().get(0);
@@ -333,7 +338,7 @@ org.codehaus.groovy.ast.stmt.BlockStatement@f4b2da[
 					key: ConstantExpression[column], value: ConstantExpression[OID]
 				), 
 				org.codehaus.groovy.ast.expr.MapEntryExpression@b25934(
-					key: ConstantExpression[generator], value: ConstantExpression[nineci.hibernate.NewObjectIdGenerator]
+					key: ConstantExpression[generator], value: ConstantExpression[xx.hibernate.NewObjectIdGenerator]
 				)
 			]
 		]
