@@ -6,19 +6,18 @@ import java.util.HashMap;
 class FieldProps {
 	private static final String DATE_CONS = "nullable:false,display:false,editable:false";
 	private static final String USER_CONS = "nullable:false,display:false,editable:false";
-	
+
 	String name;
 	Class  type;
 	//Object initValue;
 	String constraints;
 	String mapping;
-	
+
 	public static FieldProps init(String defaultName,String defaultType, String defaultCons,String defaultMapping, ConfigObject configObj) {
 		//System.out.println("ConfigObject : " + co);
 		if(configObj == null || configObj.isEmpty()) return null;
 		Map co = (Map)configObj.flatten();
-		
-		
+
 		String baseKey = "grails.plugin.audittrail." + defaultName;
 		if(getMap(configObj, baseKey) == null){
 			return null;
@@ -45,9 +44,9 @@ class FieldProps {
 		if(co.containsKey(baseKey+ ".mapping") ){
 		    newField.mapping = (String)co.get(baseKey + ".mapping");
 		}
-		
+
 		return newField;
-    } 
+    }
 
 	public static Map<String, FieldProps> buildFieldMap(ConfigObject config){
 		Map<String, FieldProps> map = new HashMap<String, FieldProps>();
@@ -58,7 +57,7 @@ class FieldProps {
 		map.put("createdDate",FieldProps.init("createdDate","java.util.Date",DATE_CONS,null,config));
 		return map;
 	}
-	
+
 	static public Object getMap(Map configMap, String keypath) {
 		String keys[] = keypath.split("\\.");
 		Map map = configMap;
@@ -75,6 +74,6 @@ class FieldProps {
 				return null;
 			}
 		}
-		return map;	
+		return map;
 	}
 }
