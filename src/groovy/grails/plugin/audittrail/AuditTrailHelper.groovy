@@ -1,18 +1,17 @@
-package grails.plugin.audittrail 
+package grails.plugin.audittrail
 
-import org.hibernate.EmptyInterceptor
-import org.hibernate.type.Type
-import org.apache.log4j.Logger
-import org.springframework.context.ApplicationContextAware
-import org.springframework.context.ApplicationContext
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 
 class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
-	private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
+	private static final Logger log = LoggerFactory.getLogger(this)
 	def currentUserClosure
 	//injected
 	def grailsApplication
-	Map fieldPropsMap 
+	Map fieldPropsMap
 	String companyIdField
 
 	ApplicationContext applicationContext
@@ -23,9 +22,9 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 		if(log.isDebugEnabled()) log.debug "in beforeValidateInit for $entity"
 		//if its not new then just exit as we will assume an updated entity is setup correctly
 		if(!isNewEntity(entity)) return
-		
+
 		setFieldDefaults(entity)
-		
+
 		if(companyIdField){
 			def property = entity.metaClass.hasProperty(entity,companyIdField)
 			if(property) {
@@ -36,7 +35,7 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 			}
 		}
 	}
-	
+
 	void setFieldDefaults(Object entity){
 	    def time = System.currentTimeMillis()
 	    //assume its a new entity
@@ -54,7 +53,7 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 			}
 		}
 	}
-	
+
 	boolean isNewEntity(entity){
 		def session = applicationContext.sessionFactory.currentSession
 		def entry = session.persistenceContext.getEntry(entity)
@@ -62,11 +61,11 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
             return true
         }
 	}
-	
+
 	def currentUserId() {
 		return currentUserClosure(applicationContext)
 	}
-	
+
 	def getSpringSecurityUser = { ctx ->
 		def authPrincipal = ctx.springSecurityService.principal
 		// Added check for error coming while creating new company
@@ -77,16 +76,12 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 			return 0 //fall back
 		}
 	}
-	
+
 	Boolean isUserAuthorized(){
 		def authPrincipal = applicationContext.springSecurityService.principal
-		if(authPrincipal && authPrincipal != "anonymousUser"){
-			return true
-		}else{
-			return false
-		}
+		return (authPrincipal && authPrincipal != "anonymousUser")
 	}
-	
+
 	Long getCompanyId() {
 		def authPrincipal = applicationContext.springSecurityService.principal
 		if(authPrincipal.hasProperty(companyIdField)){
@@ -96,12 +91,12 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 			return 0
 		}
 	}
-	
+
 	//---------------------------------------------------------------------
 	// Implementation of InitializingBean interface
 	//---------------------------------------------------------------------
 
-	public void afterPropertiesSet() throws Exception {
+	void afterPropertiesSet() {
 
 		def cfgClosure = grailsApplication.config.grails.plugin.audittrail.currentUserClosure
 		if(cfgClosure){
@@ -109,9 +104,8 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 		}else{
 			currentUserClosure = getSpringSecurityUser
 		}
-
 	}
-	
+
 	/**
 	 * mocks this out for a unit test
 	 */

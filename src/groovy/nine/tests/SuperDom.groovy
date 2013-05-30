@@ -3,8 +3,8 @@ package nine.tests
 @gorm.AuditStamp
 abstract class SuperDom {
 	String superProp
-	
-    static constraints = {
+
+	static constraints = {
 		superProp nullable:true
-    }
+	}
 }

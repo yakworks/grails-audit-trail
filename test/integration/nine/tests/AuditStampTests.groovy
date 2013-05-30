@@ -1,23 +1,17 @@
 package nine.tests
 
-import grails.test.*
 import groovy.sql.Sql
-import java.sql.ResultSet
+
 import org.apache.commons.lang.time.DateUtils
 
 /**
  * Uses the doms domain to test the created by and edited by fields and CreateEditeStamp ASTrandformer
- *
-**/
+ */
 class AuditStampTests extends BaseInt {
 	def sessionFactory
 	def dataSource
 	def grailsApplication
 
-	void setUp() {
-		super.setUp();
-	}
-	
 	void test_constraints(){
 		def art = grailsApplication.getDomainClass("nine.tests.TestDomain")
 		assert art
@@ -25,39 +19,39 @@ class AuditStampTests extends BaseInt {
 		assert art.constraints.createdDate.getAppliedConstraint('nullable').isNullable()  == false
 		assert art.constraints.updatedBy.getAppliedConstraint('nullable').isNullable()  == true
 		assert art.constraints.updatedBy.getAppliedConstraint('max').maxValue  == 90000l
-		//def prop= art.getPropertyByName("updatedBy") 
+		//def prop= art.getPropertyByName("updatedBy")
 	}
-	
+
 	void testCreateEditInsert() {
 		def dom = new TestDomain(name:"blah")
 		dom.save(flush:true,failOnError:true)
-		assertNotNull(dom.id);
-		def sql = new Sql(dataSource);
-		def sqlCall = 'select oid, companyId,createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
+		assertNotNull(dom.id)
+		def sql = new Sql(dataSource)
+		def sqlCall = 'select oid, company_id,created_by, created_date, whoUpdated, edited_date from TestDomains where oid = ' + dom.id
 		println sqlCall
-		//def data = hibSession.createSQLQuery(sqlCall).uniqueResult();
+		//def data = hibSession.createSQLQuery(sqlCall).uniqueResult()
 		def data = sql.firstRow(sqlCall)
 		assertNotNull(data)
 		assertEquals(dom.id, data.oid)
-		assertEquals(5L, data.companyId)
-		assertNotNull(data.createdDate)
-		assertNotNull(data.editedDate)
-		assertTrue DateUtils.isSameDay(data.createdDate, new Date())
-		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
+		assertEquals(5L, data.company_id)
+		assertNotNull(data.created_date)
+		assertNotNull(data.edited_date)
+		assertTrue DateUtils.isSameDay(data.created_date, new Date())
+		assertTrue DateUtils.isSameDay(data.edited_date, new Date())
 		assertEquals(authUser.id, data.whoUpdated)
-		assertEquals(authUser.id, data.createdBy)
+		assertEquals(authUser.id, data.created_by)
 	}
-	
+
 	void testCreateEditInsert_with_companyId() {
 		def dom = new TestDomain(name:"blah2",companyId:7)
 		assert dom.save(flush:true,failOnError:true)
-		
-		def sql = new Sql(dataSource);
-		def sqlCall = 'select oid, companyId,createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
+
+		def sql = new Sql(dataSource)
+		def sqlCall = 'select oid, company_id,created_by, created_date, whoUpdated, edited_date from TestDomains where oid = ' + dom.id
 
 		def data = sql.firstRow(sqlCall)
 		assertNotNull(data)
-		assertEquals(7L, data.companyId)
+		assertEquals(7L, data.company_id)
 	}
 
 	void testCreateEditUpdate() {
@@ -65,23 +59,22 @@ class AuditStampTests extends BaseInt {
 		def yesterday = today - 1
 		java.sql.Date yesterdaySQL = new java.sql.Date(yesterday.getTime())
 		def sql = new Sql(sessionFactory.getCurrentSession().connection())
-		
-		sql.execute("insert into TestDomains (oid,version,companyId,name, createdBy, createdDate, whoUpdated, editedDate) "+
+
+		sql.execute("insert into TestDomains (oid,version,company_id,name, created_by, created_date, whoUpdated, edited_date) "+
 		  " values (?,?,?,?,?,?,?,?)", [2,0,5,"xxx", 0,yesterdaySQL,0,yesterdaySQL])
-		
-		
+
 		def dom = TestDomain.get(2)
-		assertNotNull(dom);
+		assertNotNull(dom)
 		dom.name="new name"
 		dom.save(flush:true,failOnError:true)
-		
-		def sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
+
+		def sqlCall = 'select oid, created_by, created_date, whoUpdated, edited_date from TestDomains where oid = ' + dom.id
 		println sqlCall
 		def data = sql.firstRow(sqlCall)
 		assertNotNull(data)
 		assertEquals(dom.id, data.oid)
-		assertNotNull(data.editedDate)
-		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
+		assertNotNull(data.edited_date)
+		assertTrue DateUtils.isSameDay(data.edited_date, new Date())
 		assertEquals(authUser.id, data.whoUpdated)
 	}
 /*
@@ -99,5 +92,4 @@ class AuditStampTests extends BaseInt {
 		}
 		assertFalse sessionFactory.getCurrentSession().isDirty()
 	}*/
-
 }

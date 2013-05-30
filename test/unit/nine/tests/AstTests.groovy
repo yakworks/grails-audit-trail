@@ -1,8 +1,7 @@
 package nine.tests
-import grails.test.mixin.*
-import org.codehaus.groovy.ast.stmt.BlockStatement;
-import org.codehaus.groovy.ast.builder.AstBuilder;
-import org.junit.*
+
+import org.codehaus.groovy.ast.builder.AstBuilder
+import org.codehaus.groovy.ast.stmt.BlockStatement
 
 /**
  * See the API for {@link grails.test.mixin.domain.DomainClassUnitTestMixin} for usage instructions
@@ -11,15 +10,15 @@ import org.junit.*
 class AstTests {
 
     void test_buildFromString() {
-		String constraintsStr = "{->\n" + 
-		                                "	myVariable nullable: true, fuckit:false\n"+ 
+		String constraintsStr = "{->\n" +
+		                                "	myVariable nullable: true, fuckit:false\n"+
 		                                "}";
-		BlockStatement newConstraints = (BlockStatement) new AstBuilder().buildFromString(constraintsStr).get(0); 
+		BlockStatement newConstraints = (BlockStatement) new AstBuilder().buildFromString(constraintsStr).get(0)
 		assert newConstraints.getStatements().size() == 1
 		println newConstraints
 		println newConstraints.getStatements()
-/*		for (Statement statement: newConstraints.getStatements()) { 
-			constraintsBlock.addStatement(statement); 
+/*		for (Statement statement: newConstraints.getStatements()) {
+			constraintsBlock.addStatement(statement)
 		}*/
     }
 }

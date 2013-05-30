@@ -1,6 +1,6 @@
 package nine.tests
 
-import gorm.AuditStamp;
+import gorm.AuditStamp
 
 @AuditStamp
 class TestDomain {
@@ -9,17 +9,14 @@ class TestDomain {
 
 	Long companyId = 0
 
-	static mapping={ 
-		table 'TestDomains' 
-	} 
-	
+	static mapping = {
+		table 'TestDomains'
+	}
+
 	// def beforeValidate() {
 	// 	println 'in validate'
-	// } 
+	// }
 /*	static constraints = { ->
 		createdDate nullable:true
-	}*/ 
-
-	
-	
+	}*/
 }
