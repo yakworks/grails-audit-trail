@@ -2,7 +2,7 @@ import gorm.*
 
 class AuditTrailGrailsPlugin {
     // the plugin version
-    def version = "2.0.3"
+    def version = "2.0.4"
     def grailsVersion = "1.3.6 > *"
 
     def author = "Joshua Burnett"
@@ -41,6 +41,7 @@ class AuditTrailGrailsPlugin {
 		entityInterceptor(grails.plugin.audittrail.AuditTrailInterceptor){
 			auditTrailHelper = ref("auditTrailHelper")
 			fieldPropsMap = fprops
+			dbDialect = (application.config.dataSource.dialect).toString()
 		}
 		
 	}
