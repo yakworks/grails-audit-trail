@@ -19,13 +19,13 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 	boolean onFlushDirty(Object entity, Serializable id, Object[] currentState,Object[] previousState, String[] propertyNames,Type[] types) {
 
 		String field = fieldPropsMap.get("editedDate").name
-		MetaProperty property = entity.metaClass.hasProperty(entity, field)
+		MetaProperty property = entity.getMetaClass().hasProperty(entity, field)
 		if(property) {
 			def now = property.getType().newInstance([System.currentTimeMillis()] as Object[] )
 			setValue(currentState, propertyNames, fieldPropsMap.get("editedDate").name, now)
 		}
 		field = fieldPropsMap.get("editedBy").name
-		property = entity.metaClass.hasProperty(entity,field)
+		property = entity.getMetaClass().hasProperty(entity,field)
 		if(property) {
 			setValue(currentState, propertyNames, field, auditTrailHelper.currentUserId())
 		}
@@ -37,7 +37,7 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 
 		['createdDate','editedDate','createdBy','editedBy'].each{ key->
 			def field = fieldPropsMap.get(key).name
-			def property = entity.metaClass.hasProperty(entity, field)
+			def property = entity.getMetaClass().hasProperty(entity, field)
 			if(property) {
 				def valToSet
 				if(key == 'createdDate' || key == 'editedDate'){
@@ -51,7 +51,7 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 
 		String companyIdField = auditTrailHelper.companyIdField
 		if(companyIdField){
-			def property = entity.metaClass.hasProperty(entity,companyIdField)
+			def property = entity.getMetaClass().hasProperty(entity, companyIdField)
 			if(property) {
 				def curvalue = entity."$companyIdField"
 				if(curvalue==null || curvalue==0 && auditTrailHelper.userGoodForCompanyId() ){ //only update if its 0 or null
