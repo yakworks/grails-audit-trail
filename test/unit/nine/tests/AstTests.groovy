@@ -2,13 +2,14 @@ package nine.tests
 
 import org.codehaus.groovy.ast.builder.AstBuilder
 import org.codehaus.groovy.ast.stmt.BlockStatement
-
+import org.junit.Test
 /**
  * See the API for {@link grails.test.mixin.domain.DomainClassUnitTestMixin} for usage instructions
  */
 //@TestFor(TestDomain)
 class AstTests {
 
+	@Test
     void test_buildFromString() {
 		String constraintsStr = "{->\n" +
 		                                "	myVariable nullable: true, fuckit:false\n"+

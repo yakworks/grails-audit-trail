@@ -4,7 +4,7 @@ import grails.plugin.audittrail.AuditTrailInterceptor
 
 class AuditTrailGrailsPlugin {
 	def version = "2.0.4"
-	def grailsVersion = "1.3.6 > *"
+	def grailsVersion = "2.0.0 > *"
 
 	def author = "Joshua Burnett"
 	def authorEmail = "joshua@greenbill.com"
@@ -25,7 +25,7 @@ class AuditTrailGrailsPlugin {
 		'src/groovy/nine/tests/**'
 	]
 
-	def loadAfter = ['hibernate']
+	def loadAfter = ['hibernate','hibernate4']
 
 	def doWithSpring = {
 
@@ -35,13 +35,11 @@ class AuditTrailGrailsPlugin {
 		auditTrailHelper(AuditTrailHelper) {
 			grailsApplication = ref("grailsApplication")
 			fieldPropsMap = fprops
-			companyIdField = cfg.companyId.field?:null
 		}
 
 		entityInterceptor(AuditTrailInterceptor) {
 			auditTrailHelper = ref("auditTrailHelper")
 			fieldPropsMap = fprops
-			dbDialect = (application.config.dataSource.dialect).toString()
 		}
 	}
 }

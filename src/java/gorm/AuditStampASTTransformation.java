@@ -1,8 +1,6 @@
 package gorm;
 
-import static groovyjarjarasm.asm.Opcodes.ACC_PUBLIC;
-import static groovyjarjarasm.asm.Opcodes.ACC_STATIC;
-import static groovyjarjarasm.asm.Opcodes.ACC_TRANSIENT;
+import grails.util.GrailsNameUtils;
 import groovy.util.ConfigObject;
 import groovy.util.ConfigSlurper;
 
@@ -13,29 +11,31 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
-import org.codehaus.groovy.ast.ASTNode;
-import org.codehaus.groovy.ast.ClassHelper;
-import org.codehaus.groovy.ast.ClassNode;
-import org.codehaus.groovy.ast.FieldNode;
-import org.codehaus.groovy.ast.MethodNode;
-import org.codehaus.groovy.ast.Parameter;
-import org.codehaus.groovy.ast.PropertyNode;
-import org.codehaus.groovy.ast.VariableScope;
-import org.codehaus.groovy.ast.builder.AstBuilder;
+import org.codehaus.groovy.ast.*;
+import org.codehaus.groovy.ast.expr.ArgumentListExpression;
 import org.codehaus.groovy.ast.expr.ClosureExpression;
 import org.codehaus.groovy.ast.expr.ConstantExpression;
+import org.codehaus.groovy.ast.expr.ConstructorCallExpression;
+import org.codehaus.groovy.ast.expr.Expression;
 import org.codehaus.groovy.ast.expr.MethodCallExpression;
+import org.codehaus.groovy.ast.expr.NamedArgumentListExpression;
+import org.codehaus.groovy.ast.expr.VariableExpression;
 import org.codehaus.groovy.ast.stmt.BlockStatement;
 import org.codehaus.groovy.ast.stmt.ExpressionStatement;
-import org.codehaus.groovy.ast.stmt.ReturnStatement;
 import org.codehaus.groovy.ast.stmt.Statement;
 import org.codehaus.groovy.control.CompilePhase;
 import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.transform.ASTTransformation;
 import org.codehaus.groovy.transform.GroovyASTTransformation;
+import org.codehaus.groovy.ast.builder.AstBuilder;
+import org.codehaus.groovy.ast.stmt.EmptyStatement;
+import org.codehaus.groovy.ast.stmt.ReturnStatement;
+
 // import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 // import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.codehaus.groovy.ast.MethodNode.*;
 
 /**
  * Performs an ast transformation on a class - adds createdBy/createdDate editedBy/EditedDate id and table
@@ -44,7 +44,7 @@ import org.codehaus.groovy.transform.GroovyASTTransformation;
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 public class AuditStampASTTransformation implements ASTTransformation {
 	//private static final Log LOG = LogFactory.getLog(AuditStampASTTransformation.class);
-
+	
 	private static final ConfigObject CO = new ConfigSlurper().parse(getContents(new File("./grails-app/conf/Config.groovy")));
 
 	public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
@@ -57,22 +57,24 @@ public class AuditStampASTTransformation implements ASTTransformation {
 				doBeforeValidate(classNode);
 				//debugFieldNodes(classNode);
 				//List<FieldNode>  fnlist = classNode.getFields();
-
+							
 				createUserField( classNode, fprops.get("editedBy"));
 				createUserField( classNode, fprops.get("createdBy"));
 
 				createDateField( classNode, fprops.get("editedDate"));
 				createDateField( classNode, fprops.get("createdDate"));
+
 			}
 		}
 	}
-
+	
 	public void doBeforeValidate(ClassNode classNode){
 		//add the field for service injection of auditTrailHelper
-		// FieldNode auditTrailHelperField = new FieldNode(name, ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null);
+		// FieldNode auditTrailHelperField = new FieldNode(name, ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null); 
 		// classNode.addField(auditTrailHelperField);
 		classNode.addProperty("auditTrailHelper", ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), null, null, null);
-
+		classNode.addProperty("disableAuditTrailStamp", ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), ConstantExpression.FALSE, null, null);
+		
 		MethodNode mn = classNode.getMethod("beforeValidate", Parameter.EMPTY_ARRAY);
 		if(mn == null){
 			classNode.addMethod("beforeValidate", Modifier.PUBLIC, ClassHelper.OBJECT_TYPE, Parameter.EMPTY_ARRAY, null, new BlockStatement());
@@ -91,8 +93,8 @@ public class AuditStampASTTransformation implements ASTTransformation {
 		// 	"}"
 		// 	;
 		String configStr = "auditTrailHelper?.initializeFields(this) ";
-		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0);
-
+		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0); 
+		
 		//ExpressionStatement exStatment = (ExpressionStatement) newConfig.getStatements().get(0);
 		//ExpressionStatement exStatment = new ExpressionStatement(returnStatement.getExpression());
 		BlockStatement block = (BlockStatement) mn.getCode();
@@ -100,7 +102,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 		block.addStatement(newConfig.getStatements().get(0));
 		//System.out.println(block);
 	}
-
+	
 	public void createUserField(ClassNode classNode,FieldProps fieldProps){
 		if(fieldProps==null) return;
 		//ConstantExpression cce = (fieldProps.initValue!=null) ? new ConstantExpression(fieldProps.initValue) : null;
@@ -108,7 +110,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 		addSettings("mapping",classNode,fieldProps.name,fieldProps.mapping);
 		addSettings("constraints",classNode,fieldProps.name,fieldProps.constraints);
 	}
-
+	
 	public void createDateField(ClassNode classNode,FieldProps fieldProps){
 		if(fieldProps==null) return;
 		// Expression cnow = null;
@@ -121,21 +123,21 @@ public class AuditStampASTTransformation implements ASTTransformation {
 	}
 
 	public void addSettings(String name,ClassNode classNode,String fieldName,String config){
-		if(config==null)
+		if(config==null) 
 			return;
-
+		
 		String configStr = fieldName + " " + config;
-
-		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0);
+		
+		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0); 
 
 		FieldNode closure = classNode.getField(name);
 		if(closure == null){
 			createStaticClosure(classNode, name);
 			closure = classNode.getField(name);
 			assert closure != null;
-		}
-
-		if(!hasFieldInClosure(closure,fieldName)){
+		} 
+		
+		if(!hasFieldInClosure(closure,fieldName)){			
 			ReturnStatement returnStatement = (ReturnStatement) newConfig.getStatements().get(0);
 			ExpressionStatement exStatment = new ExpressionStatement(returnStatement.getExpression());
 			ClosureExpression exp = (ClosureExpression)closure.getInitialExpression();
@@ -148,8 +150,8 @@ public class AuditStampASTTransformation implements ASTTransformation {
 	}
 
 	public void createStaticClosure(ClassNode classNode,String name){
-		FieldNode field = new FieldNode(name, ACC_PUBLIC | ACC_STATIC,
-			new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null);
+		FieldNode field = new FieldNode(name, ACC_PUBLIC | ACC_STATIC, 
+			new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null); 
 		ClosureExpression expr = new ClosureExpression(Parameter.EMPTY_ARRAY, new BlockStatement());
 		expr.setVariableScope(new VariableScope());
 		field.setInitialValueExpression(expr);
@@ -173,7 +175,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 		}
 		return false;
 	}
-
+	
 	public void debugFieldNodes(ClassNode classNode){
 		//List<FieldNode>  fnlist = classNode.getFields();
 		List<PropertyNode>	fnlist = classNode.getProperties() ;
@@ -192,7 +194,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 			//FileReader always assumes default encoding is OK!
 			BufferedReader input =  new BufferedReader(new FileReader(aFile));
 			try {
-				String line = null;
+				String line = null; 
 				while (( line = input.readLine()) != null){
 					contents.append(line);
 					contents.append(System.getProperty("line.separator"));
@@ -225,7 +227,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 				return null;
 			}
 		}
-		return map;
+		return map;	
 	}
 
 	//old but kept for reference
@@ -240,7 +242,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 			ClosureExpression exp = (ClosureExpression)closure.getInitialExpression();
 			BlockStatement block = (BlockStatement) exp.getCode();
 
-			//this just adds an s to the class name for the table if its not specified
+			//this just adds an s to the class name for the table if its not specified 
 			Boolean pluralize = (Boolean)getMap(CO,"stamp.mapping.pluralTable");
 			if(!hasTable && pluralize!=null && pluralize){
 				String tablename = GrailsClassUtils.getShortName(classNode.getName())+"s";
@@ -248,7 +250,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 				MethodCallExpression tableMeth = new MethodCallExpression(
 					VariableExpression.THIS_EXPRESSION,
 					new ConstantExpression("table"),
-					new ArgumentListExpression(new ConstantExpression(tablename))
+					new ArgumentListExpression(new ConstantExpression(tablename)) 
 					);
 				//block = (BlockStatement) exp.getCode();
 				block.addStatement(new ExpressionStatement(tableMeth));
@@ -279,7 +281,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 }
 
 
-//FUTURE
+//FUTURE 
 /**
 java.math.BigDecimal
 java.lang.Integer
@@ -301,7 +303,7 @@ public void addConstraintDefaults(ClassNode classNode){
 			System.out.println("*" + fnode.getName() + " - " + fnode.getType().getName());
 		}
 	}
-
+	
 	boolean hasConstraint=false;
 
 }
@@ -311,8 +313,8 @@ public void addConstraintDefaults(ClassNode classNode){
 org.codehaus.groovy.ast.stmt.BlockStatement@f4b2da[
 	org.codehaus.groovy.ast.stmt.ExpressionStatement@a0a4a[
 		expression:org.codehaus.groovy.ast.expr.MethodCallExpression@29aa5a[
-			object: org.codehaus.groovy.ast.expr.VariableExpression@6f0383[variable: this]
-			method: ConstantExpression[discDate]
+			object: org.codehaus.groovy.ast.expr.VariableExpression@6f0383[variable: this] 
+			method: ConstantExpression[discDate] 
 			arguments: org.codehaus.groovy.ast.expr.NamedArgumentListExpression@4fb195[
 				org.codehaus.groovy.ast.expr.MapEntryExpression@13becc(key: ConstantExpression[nullable], value: ConstantExpression[true])
 			]
@@ -323,19 +325,19 @@ org.codehaus.groovy.ast.stmt.BlockStatement@f4b2da[
 { org.codehaus.groovy.ast.stmt.BlockStatement@f0bc0[
 	org.codehaus.groovy.ast.stmt.ExpressionStatement@cc9e15[
 		expression:org.codehaus.groovy.ast.expr.MethodCallExpression@9e94e8[
-			object: org.codehaus.groovy.ast.expr.VariableExpression@3c2282[variable: this]
-			method: ConstantExpression[table]
+			object: org.codehaus.groovy.ast.expr.VariableExpression@3c2282[variable: this] 
+			method: ConstantExpression[table] 
 			arguments: org.codehaus.groovy.ast.expr.ArgumentListExpression@42428a[ConstantExpression[SyncSteps]]
 		]
-	],
+	], 
 	org.codehaus.groovy.ast.stmt.ExpressionStatement@1eafb4[
 		expression:org.codehaus.groovy.ast.expr.MethodCallExpression@a17663[
-			object: org.codehaus.groovy.ast.expr.VariableExpression@3c2282[variable: this]
-			method: ConstantExpression[id]
+			object: org.codehaus.groovy.ast.expr.VariableExpression@3c2282[variable: this] 
+			method: ConstantExpression[id] 
 			arguments: org.codehaus.groovy.ast.expr.NamedArgumentListExpression@636202[
 				org.codehaus.groovy.ast.expr.MapEntryExpression@b781ea(
 					key: ConstantExpression[column], value: ConstantExpression[OID]
-				),
+				), 
 				org.codehaus.groovy.ast.expr.MapEntryExpression@b25934(
 					key: ConstantExpression[generator], value: ConstantExpression[xx.hibernate.NewObjectIdGenerator]
 				)
@@ -343,8 +345,8 @@ org.codehaus.groovy.ast.stmt.BlockStatement@f4b2da[
 		]
 	], org.codehaus.groovy.ast.stmt.ExpressionStatement@fe6f06[
 		expression:org.codehaus.groovy.ast.expr.MethodCallExpression@2b0459[
-			object: org.codehaus.groovy.ast.expr.VariableExpression@3c2282[variable: this]
-			method: ConstantExpression[syncBatch]
+			object: org.codehaus.groovy.ast.expr.VariableExpression@3c2282[variable: this] 
+			method: ConstantExpression[syncBatch] 
 			arguments: org.codehaus.groovy.ast.expr.NamedArgumentListExpression@2a938f[
 				org.codehaus.groovy.ast.expr.MapEntryExpression@3dbf04(key: ConstantExpression[column], value: ConstantExpression[SyncBatchId])]]]] }
 

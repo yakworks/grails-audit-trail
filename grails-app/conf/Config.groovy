@@ -12,9 +12,9 @@ grails.gorm.default.mapping = {
 }
 
 // Added by the Spring Security Core plugin:
-grails.plugins.springsecurity.userLookup.userDomainClassName = 'nine.tests.TestUser'
-grails.plugins.springsecurity.userLookup.authorityJoinClassName = 'nine.tests.TestUserTestRole'
-grails.plugins.springsecurity.authority.className = 'nine.tests.TestRole'
+grails.plugin.springsecurity.userLookup.userDomainClassName = 'nine.tests.TestUser'
+grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'nine.tests.TestUserTestRole'
+grails.plugin.springsecurity.authority.className = 'nine.tests.TestRole'
 
 grails{
 	plugin{
@@ -31,10 +31,9 @@ grails{
 
 			editedBy.field  = "updatedBy" //id who updated/edited
 			editedBy.type   = "java.lang.Long" //fully qualified class name if not a java.lang.(String,Long,etc..)
-			editedBy.constraints = "nullable:true, max:90000l"
+			editedBy.constraints = "nullable:true, max:90000l,bindable:false"
 			editedBy.mapping = "column: 'whoUpdated'"
 
-			companyId.field   = "companyId" //used for multi-tenant apps
 		}
 	}
 }

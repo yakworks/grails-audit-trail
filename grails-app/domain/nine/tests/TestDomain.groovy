@@ -7,8 +7,6 @@ class TestDomain {
 
 	String name
 
-	Long companyId = 0
-
 	static mapping = {
 		table 'TestDomains'
 	}

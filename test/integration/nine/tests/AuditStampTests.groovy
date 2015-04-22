@@ -1,95 +1,167 @@
 package nine.tests
 
+import grails.test.*
 import groovy.sql.Sql
-
+import java.sql.ResultSet
 import org.apache.commons.lang.time.DateUtils
+import org.codehaus.groovy.grails.web.binding.DefaultASTDatabindingHelper
+
+import grails.plugin.springsecurity.userdetails.GrailsUser
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.AuthorityUtils
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 /**
  * Uses the doms domain to test the created by and edited by fields and CreateEditeStamp ASTrandformer
- */
-class AuditStampTests extends BaseInt {
+ *
+**/
+class AuditStampTests extends GroovyTestCase {
 	def sessionFactory
 	def dataSource
 	def grailsApplication
 
+	
+	void setUp() {
+		super.setUp()
+		login()
+	}
+	
+	def login(){
+		def user = TestUser.findByUsername("joe")
+		if(!user){
+			user = new TestUser(username:"joe",enabled:true,password:"passwd",accountExpired:false,accountLocked:false,passwordExpired:false)
+			user.save(flush:true,failOnError:true)
+
+			def grailsUser = new GrailsUser(user.username, user.password, user.enabled,
+				true, !user.passwordExpired, true, AuthorityUtils.createAuthorityList('ROLE_ADMIN'), user.id)
+			SCH.context.authentication = new UsernamePasswordAuthenticationToken(grailsUser, user.password, AuthorityUtils.createAuthorityList('ROLE_ADMIN'))
+		}
+		assert user
+		return user
+	}
+
 	void test_constraints(){
 		def art = grailsApplication.getDomainClass("nine.tests.TestDomain")
 		assert art
+		assert art.constraints.createdBy.getAppliedConstraint('nullable').isNullable()  == false
 		assert art.constraints.editedDate.getAppliedConstraint('nullable').isNullable()  == false
 		assert art.constraints.createdDate.getAppliedConstraint('nullable').isNullable()  == false
 		assert art.constraints.updatedBy.getAppliedConstraint('nullable').isNullable()  == true
 		assert art.constraints.updatedBy.getAppliedConstraint('max').maxValue  == 90000l
-		//def prop= art.getPropertyByName("updatedBy")
+		
+		def l = TestDomain."${DefaultASTDatabindingHelper.DEFAULT_DATABINDING_WHITELIST}"
+		assert l == ['name']
+		assert l.size() == 1
+		
+		//def prop= art.getPropertyByName("updatedBy") 
 	}
+	
+	void testBindable(){
+	    def d = new TestDomain()
+		d.properties = [name:'test',createdBy:99,updatedBy:999]
 
+        assert d.createdBy == null
+        assert d.updatedBy == null
+        
+		d.save(failOnError:true)//,validate:false)
+		assert d.createdBy == 1
+        assert d.updatedBy == 1
+	}
+	
+    void testValidateFalse(){
+        def d = new TestDomain()
+        d.properties = [name:'test']
+
+        assert d.createdBy == null
+        assert d.updatedBy == null
+        
+        d.save(failOnError:true, validate:false)
+        assert d.createdBy == 1
+        assert d.updatedBy == 1
+    }
+	
 	void testCreateEditInsert() {
 		def dom = new TestDomain(name:"blah")
 		dom.save(flush:true,failOnError:true)
-		assertNotNull(dom.id)
-		def sql = new Sql(dataSource)
-		def sqlCall = 'select oid, company_id,created_by, created_date, whoUpdated, edited_date from TestDomains where oid = ' + dom.id
+		assertNotNull(dom.id);
+		def sql = new Sql(dataSource);
+		def sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
 		println sqlCall
-		//def data = hibSession.createSQLQuery(sqlCall).uniqueResult()
+		//def data = hibSession.createSQLQuery(sqlCall).uniqueResult();
 		def data = sql.firstRow(sqlCall)
 		assertNotNull(data)
 		assertEquals(dom.id, data.oid)
-		assertEquals(5L, data.company_id)
-		assertNotNull(data.created_date)
-		assertNotNull(data.edited_date)
-		assertTrue DateUtils.isSameDay(data.created_date, new Date())
-		assertTrue DateUtils.isSameDay(data.edited_date, new Date())
+		assertNotNull(data.createdDate)
+		assertNotNull(data.editedDate)
+		assertTrue DateUtils.isSameDay(data.createdDate, new Date())
+		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
+		def authUser = login()
 		assertEquals(authUser.id, data.whoUpdated)
-		assertEquals(authUser.id, data.created_by)
+		assertEquals(authUser.id, data.createdBy)
 	}
-
-	void testCreateEditInsert_with_companyId() {
-		def dom = new TestDomain(name:"blah2",companyId:7)
-		assert dom.save(flush:true,failOnError:true)
-
-		def sql = new Sql(dataSource)
-		def sqlCall = 'select oid, company_id,created_by, created_date, whoUpdated, edited_date from TestDomains where oid = ' + dom.id
-
-		def data = sql.firstRow(sqlCall)
-		assertNotNull(data)
-		assertEquals(7L, data.company_id)
-	}
+	
 
 	void testCreateEditUpdate() {
 		def today = new Date()
 		def yesterday = today - 1
 		java.sql.Date yesterdaySQL = new java.sql.Date(yesterday.getTime())
 		def sql = new Sql(sessionFactory.getCurrentSession().connection())
-
-		sql.execute("insert into TestDomains (oid,version,company_id,name, created_by, created_date, whoUpdated, edited_date) "+
-		  " values (?,?,?,?,?,?,?,?)", [2,0,5,"xxx", 0,yesterdaySQL,0,yesterdaySQL])
-
+		
+		sql.execute("insert into TestDomains (oid,version,name, createdBy, createdDate, whoUpdated, editedDate) "+
+		  " values (?,?,?,?,?,?,?)", [2,0,"xxx", 0,yesterdaySQL,0,yesterdaySQL])
+		
+		
 		def dom = TestDomain.get(2)
-		assertNotNull(dom)
+		assertNotNull(dom);
 		dom.name="new name"
 		dom.save(flush:true,failOnError:true)
-
-		def sqlCall = 'select oid, created_by, created_date, whoUpdated, edited_date from TestDomains where oid = ' + dom.id
+		
+		def sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
 		println sqlCall
 		def data = sql.firstRow(sqlCall)
 		assertNotNull(data)
 		assertEquals(dom.id, data.oid)
-		assertNotNull(data.edited_date)
-		assertTrue DateUtils.isSameDay(data.edited_date, new Date())
+		assertNotNull(data.editedDate)
+		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
+		def authUser = login()
 		assertEquals(authUser.id, data.whoUpdated)
 	}
-/*
-	// Test for checking if ArDocDetail is dirty when we fetch arDocDetails from arDoc
-	void testArDocDetailIsDirty(){
-		def arDocDetail = ArDocDetail.get(100)
-		assertNotNull(arDocDetail)
-		assertFalse sessionFactory.getCurrentSession().isDirty()
-		def arDoc = ArDoc.get(100)
-		println "detail count is ${arDoc.details.size()}"
-		if( !arDoc.save(flush:true) ) {
-			arDoc.errors.each {
-				println it
-			}
-		}
-		assertFalse sessionFactory.getCurrentSession().isDirty()
-	}*/
+	
+	void test_disableAuditTrailStamp_fail(){
+        def d = new TestDomain()
+        d.properties = [name:'test']
+
+        assert d.createdBy == null
+        assert d.updatedBy == null
+        d.disableAuditTrailStamp = true 
+        try{
+            d.save(failOnError:true)
+        }catch(e){
+            //should have failed
+            assert e
+            assert d.createdBy == null
+            assert d.updatedBy == null
+            assert d.createdDate == null
+            assert d.editedDate == null
+        }
+    }
+    
+    void test_disableAuditTrailStamp(){
+        def d = new TestDomain()
+        d.properties = [name:'test']
+        d.disableAuditTrailStamp = true 
+        def theDate = new Date()-1
+        d.createdBy = 99
+        d.updatedBy = 99
+        d.createdDate = theDate
+        d.editedDate = theDate
+        d.save(failOnError:true)
+        
+        assert d.createdBy == 99
+        assert d.updatedBy == 99
+        assert d.createdDate == theDate
+        assert d.editedDate == theDate
+    }
+
+
 }
