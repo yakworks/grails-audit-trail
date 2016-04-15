@@ -82,21 +82,20 @@ class AuditTrailHelper implements ApplicationContextAware,InitializingBean{
 	}
 	
 	def getSpringSecurityUser = { ctx ->
-		def authPrincipal = ctx.springSecurityService.principal
-		// Added check for error coming while creating new company
-		if(authPrincipal && authPrincipal != "anonymousUser"){
-			return authPrincipal.id
-		} else {
-			//FIXME this is not ok.
-			return 0 //fall back
-		}
+        def springSecurityService = ctx.springSecurityService
+        if (springSecurityService.isLoggedIn()) {
+            return springSecurityService.principal.id
+        } else {
+            //FIXME this is not ok.
+            return 0 //fall back
+        }
 	}
 	
 	Boolean isUserAuthorized(){
-		def authPrincipal = applicationContext.springSecurityService.principal
-		if(authPrincipal && authPrincipal != "anonymousUser"){
+		def springSecurityService = applicationContext.springSecurityService
+		if (springSecurityService.isLoggedIn()) {
 			return true
-		}else{
+		} else {
 			return false
 		}
 	}
