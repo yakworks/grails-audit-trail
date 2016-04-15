@@ -1,31 +1,34 @@
 package nine.tests
 
-import grails.test.*
-import groovy.sql.Sql
-import java.sql.ResultSet
-import org.apache.commons.lang.time.DateUtils
-import org.codehaus.groovy.grails.web.binding.DefaultASTDatabindingHelper
-
 import grails.plugin.springsecurity.userdetails.GrailsUser
+import grails.test.mixin.TestMixin
+import grails.test.mixin.integration.IntegrationTestMixin
+import groovy.sql.Sql
+import org.apache.commons.lang.time.DateUtils
+import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.web.binding.DefaultASTDatabindingHelper
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.AuthorityUtils
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 /**
  * Uses the doms domain to test the created by and edited by fields and CreateEditeStamp ASTrandformer
  *
-**/
-class AuditStampTests extends GroovyTestCase {
+ **/
+
+@TestMixin(IntegrationTestMixin)
+class AuditStampTests {
 	def sessionFactory
 	def dataSource
-	def grailsApplication
+	GrailsApplication grailsApplication
+	def springSecurityService
 
-	
+
 	void setUp() {
-		super.setUp()
 		login()
 	}
-	
+
 	def login(){
 		def user = TestUser.findByUsername("joe")
 		if(!user){
@@ -33,7 +36,7 @@ class AuditStampTests extends GroovyTestCase {
 			user.save(flush:true,failOnError:true)
 
 			def grailsUser = new GrailsUser(user.username, user.password, user.enabled,
-				true, !user.passwordExpired, true, AuthorityUtils.createAuthorityList('ROLE_ADMIN'), user.id)
+					true, !user.passwordExpired, true, AuthorityUtils.createAuthorityList('ROLE_ADMIN'), user.id)
 			SCH.context.authentication = new UsernamePasswordAuthenticationToken(grailsUser, user.password, AuthorityUtils.createAuthorityList('ROLE_ADMIN'))
 		}
 		assert user
@@ -48,120 +51,134 @@ class AuditStampTests extends GroovyTestCase {
 		assert art.constraints.createdDate.getAppliedConstraint('nullable').isNullable()  == false
 		assert art.constraints.updatedBy.getAppliedConstraint('nullable').isNullable()  == true
 		assert art.constraints.updatedBy.getAppliedConstraint('max').maxValue  == 90000l
-		
+
 		def l = TestDomain."${DefaultASTDatabindingHelper.DEFAULT_DATABINDING_WHITELIST}"
 		assert l == ['name']
 		assert l.size() == 1
-		
+
 		//def prop= art.getPropertyByName("updatedBy") 
 	}
-	
+
 	void testBindable(){
-	    def d = new TestDomain()
+		def d = new TestDomain()
 		d.properties = [name:'test',createdBy:99,updatedBy:999]
 
-        assert d.createdBy == null
-        assert d.updatedBy == null
-        
-		d.save(failOnError:true)//,validate:false)
-		assert d.createdBy == 1
-        assert d.updatedBy == 1
-	}
-	
-    void testValidateFalse(){
-        def d = new TestDomain()
-        d.properties = [name:'test']
+		assert d.createdBy == null
+		assert d.updatedBy == null
 
-        assert d.createdBy == null
-        assert d.updatedBy == null
-        
-        d.save(failOnError:true, validate:false)
-        assert d.createdBy == 1
-        assert d.updatedBy == 1
-    }
-	
+		d.save(failOnError:true)//,validate:false)
+		assert d.createdBy == springSecurityService.principal.id
+		assert d.updatedBy == springSecurityService.principal.id
+	}
+
+	void testForAnynymouseUser(){
+		def d = new TestDomain()
+		d.properties = [name:'test']
+
+		assert d.createdBy == null
+		assert d.updatedBy == null
+
+		SecurityContextHolder.clearContext()
+
+		d.save(failOnError:true)//,validate:false)
+		assert d.createdBy == 0
+		assert d.updatedBy == 0
+	}
+
+	void testValidateFalse(){
+		def d = new TestDomain()
+		d.properties = [name:'test']
+
+		assert d.createdBy == null
+		assert d.updatedBy == null
+
+		d.save(failOnError:true, validate:false)
+		assert d.createdBy == springSecurityService.principal.id
+		assert d.updatedBy == springSecurityService.principal.id
+	}
+
 	void testCreateEditInsert() {
 		def dom = new TestDomain(name:"blah")
 		dom.save(flush:true,failOnError:true)
-		assertNotNull(dom.id);
+		assert dom.id != null;
 		def sql = new Sql(dataSource);
 		def sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
 		println sqlCall
 		//def data = hibSession.createSQLQuery(sqlCall).uniqueResult();
 		def data = sql.firstRow(sqlCall)
-		assertNotNull(data)
-		assertEquals(dom.id, data.oid)
-		assertNotNull(data.createdDate)
-		assertNotNull(data.editedDate)
-		assertTrue DateUtils.isSameDay(data.createdDate, new Date())
-		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
+		assert data != null
+		assert dom.id == data.oid
+		assert data.createdDate != null
+		assert data.editedDate != null
+		assert DateUtils.isSameDay(data.createdDate, new Date())
+		assert DateUtils.isSameDay(data.editedDate, new Date())
 		def authUser = login()
-		assertEquals(authUser.id, data.whoUpdated)
-		assertEquals(authUser.id, data.createdBy)
+		assert authUser.id == data.whoUpdated
+		assert authUser.id == data.createdBy
 	}
-	
+
 
 	void testCreateEditUpdate() {
 		def today = new Date()
 		def yesterday = today - 1
 		java.sql.Date yesterdaySQL = new java.sql.Date(yesterday.getTime())
 		def sql = new Sql(sessionFactory.getCurrentSession().connection())
-		
+
 		sql.execute("insert into TestDomains (oid,version,name, createdBy, createdDate, whoUpdated, editedDate) "+
-		  " values (?,?,?,?,?,?,?)", [2,0,"xxx", 0,yesterdaySQL,0,yesterdaySQL])
-		
-		
+				" values (?,?,?,?,?,?,?)", [2,0,"xxx", 0,yesterdaySQL,0,yesterdaySQL])
+
+
 		def dom = TestDomain.get(2)
-		assertNotNull(dom);
+		assert dom != null
 		dom.name="new name"
 		dom.save(flush:true,failOnError:true)
-		
+
 		def sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
 		println sqlCall
 		def data = sql.firstRow(sqlCall)
-		assertNotNull(data)
-		assertEquals(dom.id, data.oid)
-		assertNotNull(data.editedDate)
-		assertTrue DateUtils.isSameDay(data.editedDate, new Date())
+		assert data != null
+		assert dom.id == data.oid
+		assert data.editedDate != null
+		assert DateUtils.isSameDay(data.editedDate, new Date())
 		def authUser = login()
-		assertEquals(authUser.id, data.whoUpdated)
+		assert authUser.id == data.whoUpdated
 	}
-	
-	void test_disableAuditTrailStamp_fail(){
-        def d = new TestDomain()
-        d.properties = [name:'test']
 
-        assert d.createdBy == null
-        assert d.updatedBy == null
-        d.disableAuditTrailStamp = true 
-        try{
-            d.save(failOnError:true)
-        }catch(e){
-            //should have failed
-            assert e
-            assert d.createdBy == null
-            assert d.updatedBy == null
-            assert d.createdDate == null
-            assert d.editedDate == null
-        }
-    }
-    
-    void test_disableAuditTrailStamp(){
-        def d = new TestDomain()
-        d.properties = [name:'test']
-        d.disableAuditTrailStamp = true 
-        def theDate = new Date()-1
-        d.createdBy = 99
-        d.updatedBy = 99
-        d.createdDate = theDate
-        d.editedDate = theDate
-        d.save(failOnError:true)
-        
-        assert d.createdBy == 99
-        assert d.updatedBy == 99
-        assert d.createdDate == theDate
-        assert d.editedDate == theDate
-    }
+	void test_disableAuditTrailStamp_fail(){
+		def d = new TestDomain()
+		d.properties = [name:'test']
+
+		assert d.createdBy == null
+		assert d.updatedBy == null
+		d.disableAuditTrailStamp = true
+		try{
+			d.save(failOnError:true)
+		}catch(e){
+			//should have failed
+			assert e
+			assert d.createdBy == null
+			assert d.updatedBy == null
+			assert d.createdDate == null
+			assert d.editedDate == null
+		}
+	}
+
+	void test_disableAuditTrailStamp(){
+		def d = new TestDomain()
+		d.properties = [name:'test']
+		d.disableAuditTrailStamp = true
+		def theDate = new Date()-1
+		d.createdBy = 99
+		d.updatedBy = 99
+		d.createdDate = theDate
+		d.editedDate = theDate
+		d.save(failOnError:true)
+
+		assert d.createdBy == 99
+		assert d.updatedBy == 99
+		assert d.createdDate == theDate
+		assert d.editedDate == theDate
+	}
 
 
 }
