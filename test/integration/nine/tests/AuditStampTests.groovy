@@ -206,8 +206,8 @@ class AuditStampTests {
 			 deserialized = oin.readObject()
 		}
 
-		deserialized != null
-		deserialized.name == "test"
+		assert deserialized != null
+		assert deserialized.name == "test"
 	}
 
 
