@@ -1,8 +1,20 @@
 package gorm;
 
-import grails.util.GrailsNameUtils;
 import groovy.util.ConfigObject;
 import groovy.util.ConfigSlurper;
+import org.codehaus.groovy.ast.*;
+import org.codehaus.groovy.ast.builder.AstBuilder;
+import org.codehaus.groovy.ast.expr.*;
+import org.codehaus.groovy.ast.stmt.BlockStatement;
+import org.codehaus.groovy.ast.stmt.ExpressionStatement;
+import org.codehaus.groovy.ast.stmt.ReturnStatement;
+import org.codehaus.groovy.ast.stmt.Statement;
+import org.codehaus.groovy.control.CompilePhase;
+import org.codehaus.groovy.control.SourceUnit;
+import org.codehaus.groovy.syntax.Token;
+import org.codehaus.groovy.syntax.Types;
+import org.codehaus.groovy.transform.ASTTransformation;
+import org.codehaus.groovy.transform.GroovyASTTransformation;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,44 +23,23 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import org.codehaus.groovy.ast.*;
-import org.codehaus.groovy.ast.expr.ArgumentListExpression;
-import org.codehaus.groovy.ast.expr.ClosureExpression;
-import org.codehaus.groovy.ast.expr.ConstantExpression;
-import org.codehaus.groovy.ast.expr.ConstructorCallExpression;
-import org.codehaus.groovy.ast.expr.Expression;
-import org.codehaus.groovy.ast.expr.MethodCallExpression;
-import org.codehaus.groovy.ast.expr.NamedArgumentListExpression;
-import org.codehaus.groovy.ast.expr.VariableExpression;
-import org.codehaus.groovy.ast.stmt.BlockStatement;
-import org.codehaus.groovy.ast.stmt.ExpressionStatement;
-import org.codehaus.groovy.ast.stmt.Statement;
-import org.codehaus.groovy.control.CompilePhase;
-import org.codehaus.groovy.control.SourceUnit;
-import org.codehaus.groovy.transform.ASTTransformation;
-import org.codehaus.groovy.transform.GroovyASTTransformation;
-import org.codehaus.groovy.ast.builder.AstBuilder;
-import org.codehaus.groovy.ast.stmt.EmptyStatement;
-import org.codehaus.groovy.ast.stmt.ReturnStatement;
-
-// import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
-// import static org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.codehaus.groovy.ast.MethodNode.*;
+import static org.codehaus.groovy.ast.MethodNode.ACC_PUBLIC;
+import static org.codehaus.groovy.ast.MethodNode.ACC_STATIC;
 
 /**
- * Performs an ast transformation on a class - adds createdBy/createdDate editedBy/EditedDate id and table
+ * Performs an ast transformation on a class - adds createdBy/createdDate editedBy/EditedDate
  * properties to the subject class.
  */
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 public class AuditStampASTTransformation implements ASTTransformation {
-	//private static final Log LOG = LogFactory.getLog(AuditStampASTTransformation.class);
 	
 	private static final ConfigObject CO = new ConfigSlurper().parse(getContents(new File("./grails-app/conf/Config.groovy")));
+	private static final VariableExpression EXPRESSION_THIS = new VariableExpression("this");
+	private static final Token OPERATOR_ASSIGNMENT = new Token(Types.EQUAL,"=", -1,-1);
 
 	public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
-		//System.out.println("1. ConfigObject : " + CO);
+
 		Map<String, FieldProps> fprops = FieldProps.buildFieldMap(CO);
 
 		for (ASTNode astNode : astNodes) {
@@ -56,8 +47,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 				ClassNode classNode = (ClassNode) astNode;
 				doBeforeValidate(classNode);
 				//debugFieldNodes(classNode);
-				//List<FieldNode>  fnlist = classNode.getFields();
-							
+
 				createUserField( classNode, fprops.get("editedBy"));
 				createUserField( classNode, fprops.get("createdBy"));
 
@@ -69,43 +59,58 @@ public class AuditStampASTTransformation implements ASTTransformation {
 	}
 	
 	public void doBeforeValidate(ClassNode classNode){
-		//add the field for service injection of auditTrailHelper
-		// FieldNode auditTrailHelperField = new FieldNode(name, ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null); 
-		// classNode.addField(auditTrailHelperField);
-		classNode.addProperty("auditTrailHelper", ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), null, null, null);
-		classNode.addProperty("disableAuditTrailStamp", ACC_PUBLIC | ACC_TRANSIENT, new ClassNode(java.lang.Object.class), ConstantExpression.FALSE, null, null);
-		
+
+		addAuditHelperField(classNode);
+		//classNode.addProperty("auditTrailHelper", Modifier.PUBLIC | Modifier.TRANSIENT, new ClassNode(java.lang.Object.class), null, null, null);
+		classNode.addProperty("disableAuditTrailStamp", Modifier.PUBLIC | Modifier.TRANSIENT, new ClassNode(java.lang.Object.class), ConstantExpression.FALSE, null, null);
+
 		MethodNode mn = classNode.getMethod("beforeValidate", Parameter.EMPTY_ARRAY);
+
 		if(mn == null){
 			classNode.addMethod("beforeValidate", Modifier.PUBLIC, ClassHelper.OBJECT_TYPE, Parameter.EMPTY_ARRAY, null, new BlockStatement());
 			mn = classNode.getMethod("beforeValidate", Parameter.EMPTY_ARRAY);
 			assert mn != null;
 		}
-		// System.out.println(mn.toString());
-		// System.out.println(mn.getCode());
-		// String configStr = "println '1 in validate'; println '2 in validate'; "+
-		// 	"def ctx = org.codehaus.groovy.grails.commons.ApplicationHolder.application?.mainContext; " +
-		// 	"if(ctx) { \n"+
-		// 	"  println \"ctx NOT null, calling initializeFields\"\n"+
-		// 	"  ctx.getBean('auditTrailHelper').initializeFields(this) \n" +
-		// 	"} else { \n" +
-		// 	"  println \"ctx is null\" \n" +
-		// 	"}"
-		// 	;
+
+		//call auditTrailHelper.initializeFields as last statement of beforeValidate
 		String configStr = "auditTrailHelper?.initializeFields(this) ";
-		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0); 
-		
-		//ExpressionStatement exStatment = (ExpressionStatement) newConfig.getStatements().get(0);
-		//ExpressionStatement exStatment = new ExpressionStatement(returnStatement.getExpression());
+		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0);
 		BlockStatement block = (BlockStatement) mn.getCode();
-		//System.out.println(block);
 		block.addStatement(newConfig.getStatements().get(0));
-		//System.out.println(block);
+	}
+
+	//We can not make auditTrailHelper a property, because it will fail if domain is serialized (auditTrailHelper is not serializable, and can not be made).
+	//So we add a private auditTrailHelper field with a setter but no getter, it will prevent it from serializing, and dependency injection for auditTrailHelper will still work.
+	//We need a setter, or else grails will not inject auditTrailHelper, even if field is public.
+	private void addAuditHelperField(ClassNode classNode) {
+
+		//add private field.
+		FieldNode auditTrailHelperField = new FieldNode("auditTrailHelper", Modifier.PRIVATE | Modifier.TRANSIENT, new ClassNode(Object.class), classNode, null);
+		classNode.addField(auditTrailHelperField);
+
+		//add setter
+		Parameter parameter = new Parameter(new ClassNode(Object.class), "auditTrailHelper");
+		Parameter[] params = {parameter};
+
+
+		//setter body - (this.auditTrailHelper = auditTrailHelper)
+		BlockStatement methodBody = new BlockStatement();
+		methodBody.addStatement(
+				new ExpressionStatement(
+						new BinaryExpression(
+								new PropertyExpression(EXPRESSION_THIS, "auditTrailHelper"),
+								OPERATOR_ASSIGNMENT,
+								new VariableExpression(parameter)
+						)
+				)
+		);
+
+		MethodNode methodNode = new MethodNode("setAuditTrailHelper", Modifier.PUBLIC, ClassHelper.VOID_TYPE, params, null, methodBody);
+		classNode.addMethod(methodNode);
 	}
 	
 	public void createUserField(ClassNode classNode,FieldProps fieldProps){
 		if(fieldProps==null) return;
-		//ConstantExpression cce = (fieldProps.initValue!=null) ? new ConstantExpression(fieldProps.initValue) : null;
 		classNode.addProperty(fieldProps.name, Modifier.PUBLIC, new ClassNode(fieldProps.type), null, null, null);
 		addSettings("mapping",classNode,fieldProps.name,fieldProps.mapping);
 		addSettings("constraints",classNode,fieldProps.name,fieldProps.constraints);
@@ -113,18 +118,13 @@ public class AuditStampASTTransformation implements ASTTransformation {
 	
 	public void createDateField(ClassNode classNode,FieldProps fieldProps){
 		if(fieldProps==null) return;
-		// Expression cnow = null;
-		// if(fieldProps.initValue == "now"){
-		// 	cnow = new ConstructorCallExpression(new ClassNode(fieldProps.type),MethodCallExpression.NO_ARGUMENTS);
-		// }
 		classNode.addProperty(fieldProps.name, Modifier.PUBLIC, new ClassNode(fieldProps.type), null, null, null);
 		addSettings("mapping",classNode,fieldProps.name,fieldProps.mapping);
 		addSettings("constraints",classNode,fieldProps.name,fieldProps.constraints);
 	}
 
 	public void addSettings(String name,ClassNode classNode,String fieldName,String config){
-		if(config==null) 
-			return;
+		if(config==null) return;
 		
 		String configStr = fieldName + " " + config;
 		
@@ -143,15 +143,13 @@ public class AuditStampASTTransformation implements ASTTransformation {
 			ClosureExpression exp = (ClosureExpression)closure.getInitialExpression();
 			BlockStatement block = (BlockStatement) exp.getCode();
 			block.addStatement(exStatment);
-			//System.out.println(classNode.getName() + " - Added "+ configStr);
-			//System.out.println(block.toString());
 		}
+
 		assert hasFieldInClosure(closure,fieldName) == true;
 	}
 
 	public void createStaticClosure(ClassNode classNode,String name){
-		FieldNode field = new FieldNode(name, ACC_PUBLIC | ACC_STATIC, 
-			new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null); 
+		FieldNode field = new FieldNode(name, ACC_PUBLIC | ACC_STATIC, new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null);
 		ClosureExpression expr = new ClosureExpression(Parameter.EMPTY_ARRAY, new BlockStatement());
 		expr.setVariableScope(new VariableScope());
 		field.setInitialValueExpression(expr);
@@ -177,7 +175,6 @@ public class AuditStampASTTransformation implements ASTTransformation {
 	}
 	
 	public void debugFieldNodes(ClassNode classNode){
-		//List<FieldNode>  fnlist = classNode.getFields();
 		List<PropertyNode>	fnlist = classNode.getProperties() ;
 		for (PropertyNode node : fnlist) {
 			System.out.println(classNode.getName() + " : " + node.getName() + "," );

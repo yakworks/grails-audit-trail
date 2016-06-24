@@ -3,7 +3,7 @@ import grails.plugin.audittrail.AuditTrailHelper
 import grails.plugin.audittrail.AuditTrailInterceptor
 
 class AuditTrailGrailsPlugin {
-	def version = "2.1.1"
+	def version = "2.1.2"
 	def grailsVersion = "2.0.0 > *"
 
 	def author = "Joshua Burnett"

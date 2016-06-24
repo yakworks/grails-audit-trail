@@ -180,5 +180,35 @@ class AuditStampTests {
 		assert d.editedDate == theDate
 	}
 
+	void testSerializeDomain() {
+		TestDomain d = new TestDomain(name: "test")
+
+		assert d.name == "test"
+		assert d.auditTrailHelper != null //field should have been injected
+
+		//serialize
+		ByteArrayOutputStream bout = new ByteArrayOutputStream()
+		ObjectOutputStream oout = new ObjectOutputStream(bout)
+
+		try {
+			oout.writeObject(d)
+			oout.flush()
+			oout.close()
+		}catch (NotSerializableException e) {
+			e.printStackTrace()
+			fail("Domain should have been serialized successfully")
+		}
+
+		//deserialize
+		TestDomain deserialized
+		ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray())
+		bin.withObjectInputStream(getClass().getClassLoader()) { oin ->
+			 deserialized = oin.readObject()
+		}
+
+		assert deserialized != null
+		assert deserialized.name == "test"
+	}
+
 
 }
