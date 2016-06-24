@@ -3,7 +3,7 @@ package nine.tests
 import gorm.AuditStamp
 
 @AuditStamp
-class TestDomain {
+class TestDomain implements Serializable {
 
 	String name
 
@@ -11,10 +11,4 @@ class TestDomain {
 		table 'TestDomains'
 	}
 
-	// def beforeValidate() {
-	// 	println 'in validate'
-	// }
-/*	static constraints = { ->
-		createdDate nullable:true
-	}*/
 }
