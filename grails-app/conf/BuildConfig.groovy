@@ -18,6 +18,6 @@ grails.project.dependency.resolution = {
 		compile (':spring-security-core:2.0-RC4'){
 			export = false
 		}
-        runtime(":hibernate:3.6.10.18") { export = false }
+        runtime(":hibernate4:4.3.10") { export = false }
 	}
 }
