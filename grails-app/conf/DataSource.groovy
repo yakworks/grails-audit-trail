@@ -10,7 +10,7 @@ dataSource {
 hibernate {
 	cache.use_second_level_cache = false
 	cache.use_query_cache = false
-	cache.provider_class = 'org.hibernate.cache.EhCacheProvider'
+	cache.region.factory_class = 'org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory' // Hibernate 4
 	naming_strategy = 'org.hibernate.cfg.DefaultNamingStrategy'
 }
 
