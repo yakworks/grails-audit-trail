@@ -1,4 +1,4 @@
-grails.project.work.dir = 'target'
+grails.project.work.dir = '.grails'
 grails.project.dependency.resolver = "maven"
 grails.project.dependency.resolution = {
 
@@ -14,7 +14,7 @@ grails.project.dependency.resolution = {
 	}
 
 	plugins {
-        build (":release:3.1.1", ":rest-client-builder:1.0.3") { export = false }
+        build(":release:3.1.2", ":rest-client-builder:2.1.1") { export = false }
 		compile (':spring-security-core:2.0-RC4'){
 			export = false
 		}
