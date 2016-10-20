@@ -5,7 +5,6 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.8.2"
     }
 }
 
@@ -18,7 +17,6 @@ apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
-apply plugin:"asset-pipeline"
 
 repositories {
     mavenLocal()
@@ -71,9 +69,4 @@ grailsPublish {
     developers = [johndoe:"John Doe"]
     portalUser = ""
     portalPassword = ""    
-}
-
-
-assets {
-    packagePlugin = true
 }
