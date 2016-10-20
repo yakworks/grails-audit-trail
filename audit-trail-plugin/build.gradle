@@ -9,8 +9,9 @@ buildscript {
     }
 }
 
-version "0.1"
-group "stock.plugin"
+version "3.0.0.1"
+group "org.grails.plugins"
+
 
 apply plugin:"eclipse"
 apply plugin:"idea"
