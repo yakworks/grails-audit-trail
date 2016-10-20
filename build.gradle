@@ -1,0 +1,78 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.8.2"
+    }
+}
+
+version "0.1"
+group "stock.plugin"
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"org.grails.grails-plugin"
+apply plugin:"org.grails.grails-plugin-publish"
+apply plugin:"org.grails.grails-gsp"
+apply plugin:"asset-pipeline"
+
+repositories {
+    mavenLocal()
+    maven { url "https://repo.grails.org/grails/core" }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.grails:grails-bom:$grailsVersion"
+    }
+    applyMavenExclusions false
+}
+
+dependencies {
+    provided "org.springframework.boot:spring-boot-starter-logging"
+    provided "org.springframework.boot:spring-boot-autoconfigure"
+    provided "org.grails:grails-core"
+    provided "org.springframework.boot:spring-boot-starter-actuator"
+    provided "org.springframework.boot:spring-boot-starter-tomcat"
+    provided "org.grails:grails-dependencies"
+    provided "org.grails:grails-web-boot"
+
+    profile "org.grails.profiles:web-plugin"
+    provided "org.grails:grails-plugin-services"
+    provided "org.grails:grails-plugin-domain-class"
+    provided "org.codehaus.groovy:groovy-ant"
+
+    compile "org.grails.plugins:hibernate4"
+    compile "org.hibernate:hibernate-core:4.3.10.Final"
+    compile "org.hibernate:hibernate-ehcache:4.3.10.Final"
+
+    compile 'org.grails.plugins:spring-security-core:3.1.1'
+
+    testCompile "org.grails:grails-plugin-testing"
+
+    //testCompile "org.grails.plugins:geb"
+    //testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
+    //testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+}
+grailsPublish {
+    // TODO: Provide values here
+    user = 'user'
+    key = 'key'
+    githubSlug = 'foo/bar'
+    license {
+        name = 'Apache-2.0'
+    }
+    title = "My Plugin"
+    desc = "Full plugin description"
+    developers = [johndoe:"John Doe"]
+    portalUser = ""
+    portalPassword = ""    
+}
+
+
+assets {
+    packagePlugin = true
+}
