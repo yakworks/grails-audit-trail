@@ -58,6 +58,9 @@ dependencies {
 }
 
 grailsPublish {
+    user = System.getenv("BINTRAY_USER") ?: project.bintrayUser
+    key = System.getenv("BINTRAY_KEY") ?: project.bintrayKey
+
     title = "Audit Trails Grails Plugin"
     desc = "Audit Trails Grails Plugin"
     developers = [joshua:"Joshua B", "snimavat": "Sudhir N"]
