@@ -9,11 +9,9 @@ buildscript {
     }
 }
 
-version "3.0.0.1.SNAPSHOT"
+version "3.0.2"
 group "org.grails.plugins"
 
-
-apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
@@ -42,13 +40,13 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
-    provided "org.codehaus.groovy:groovy-ant"
+    
 
-    compile "org.grails.plugins:hibernate4"
-    compile "org.hibernate:hibernate-core:4.3.10.Final"
-    compile "org.hibernate:hibernate-ehcache:4.3.10.Final"
+    provided "org.grails.plugins:hibernate4"
+    provided "org.hibernate:hibernate-core:4.3.10.Final"
+    provided "org.hibernate:hibernate-ehcache:4.3.10.Final"
 
-    compile 'org.grails.plugins:spring-security-core:3.1.1'
+    compile 'org.grails.plugins:spring-security-core:3.1.2'
 
     testCompile "org.grails:grails-plugin-testing"
 
