@@ -23,7 +23,7 @@ class AuditTrailGrailsPlugin extends Plugin {
 			'grails-app/domain/**',
 			'grails-app/controllers/**',
 			'grails-app/conf/**',
-			'src/main/groovy/nine/tests/**',
+			'nine/tests/**',
 			'test/**'
 	]
 
