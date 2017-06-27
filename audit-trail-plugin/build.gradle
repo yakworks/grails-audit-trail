@@ -9,7 +9,7 @@ buildscript {
     }
 }
 
-version "3.0.2"
+version "3.0.3-SNAPSHOT"
 group "org.grails.plugins"
 
 apply plugin:"idea"
@@ -19,13 +19,6 @@ apply plugin:"org.grails.grails-plugin-publish"
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.grails:grails-bom:$grailsVersion"
-    }
-    applyMavenExclusions false
 }
 
 dependencies {
@@ -40,7 +33,6 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
-    
 
     provided "org.grails.plugins:hibernate4"
     provided "org.hibernate:hibernate-core:4.3.10.Final"
@@ -53,6 +45,10 @@ dependencies {
     //testCompile "org.grails.plugins:geb"
     //testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     //testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+}
+
+jar {
+    exclude 'nine/tests/**'
 }
 
 grailsPublish {
@@ -83,3 +79,16 @@ grailsPublish {
     //portalUser = ""
     //portalPassword = ""
 }
+
+publishing {
+    repositories {
+        maven {
+            url "http://repo.9ci.com/artifactory/grails-plugins"
+            credentials {
+                username "$artifactoryUsername"
+                password  "$artifactoryPassword"
+            }
+        }
+    }
+}
+
