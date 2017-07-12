@@ -38,7 +38,7 @@ class AuditTrailInterceptorSpec extends Specification {
 	
 	def testSetsAuditFieldsOnSave(){
 		given:
-		def entity = new TestDomain(name:"my domain")
+		TestDomain entity = new TestDomain(name:"my domain")
 		def state = new Object[4]
 		def propertyNames = ["createdBy", "updatedBy", "createdDate", "editedDate"] as String[]
 

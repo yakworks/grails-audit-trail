@@ -15,7 +15,6 @@ import org.codehaus.groovy.syntax.Token;
 import org.codehaus.groovy.syntax.Types;
 import org.codehaus.groovy.transform.ASTTransformation;
 import org.codehaus.groovy.transform.GroovyASTTransformation;
-import org.grails.config.PropertySourcesConfig;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,14 +35,13 @@ import static org.codehaus.groovy.ast.MethodNode.ACC_STATIC;
 public class AuditStampASTTransformation implements ASTTransformation {
 	private static final ConfigObject CO = new ConfigSlurper().parse(getContents(new File("grails-app/conf/application.groovy")));
 
-	PropertySourcesConfig config = new PropertySourcesConfig(CO);
+	//PropertySourcesConfig config = new PropertySourcesConfig(CO);
 
 	private static final VariableExpression EXPRESSION_THIS = new VariableExpression("this");
 	private static final Token OPERATOR_ASSIGNMENT = new Token(Types.EQUAL,"=", -1,-1);
 
 	public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
-
-		Map<String, FieldProps> fprops = FieldProps.buildFieldMap(config);
+		Map<String, FieldProps> fprops = FieldProps.buildFieldMap(CO);
 
 		for (ASTNode astNode : astNodes) {
 			if (astNode instanceof ClassNode) {

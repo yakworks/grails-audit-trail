@@ -1,7 +1,5 @@
 package gorm;
 
-import grails.config.Config;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,23 +12,30 @@ class FieldProps {
 	//Object initValue;
 	String constraints;
 	String mapping;
+
+	private static Object getConfigValue(Map config, String key, Object defaultValue) {
+		//System.out.println(key + ":" + defaultValue.toString() + ":" + config.get(key));
+		if(config.containsKey(key)) return config.get(key);
+		else return defaultValue;
+	}
 	
-	public static FieldProps init(String defaultName, String defaultType, String defaultCons, String defaultMapping, Config configObj) {
+	public static FieldProps init(String defaultName, String defaultType, String defaultCons, String defaultMapping, Map configObj) {
 		//System.out.println("ConfigObject : " + co);
 		if(configObj == null || configObj.isEmpty()) return null;
 
 		String baseKey = "grails.plugin.audittrail." + defaultName;
 
-		if(getMap(configObj, baseKey) == null){
+		Map map = (Map) getMap(configObj, baseKey);
+		if(map == null){
 			return null;
 		}
 
 		FieldProps newField = new FieldProps();
-		newField.name = (String)configObj.getProperty(baseKey + ".field", defaultName);
+		newField.name = (String)getConfigValue(map, "field", defaultName);
 
-		String className = (String)configObj.getProperty(baseKey + ".type", defaultType);
+		String className = (String)getConfigValue(map,  "type", defaultType);
 
-		if(className == null || className=="") {
+		if(className == null || className == "") {
 			className = defaultType;
 		}
 
@@ -39,19 +44,19 @@ class FieldProps {
 		}catch (ClassNotFoundException e) {
 			throw new RuntimeException("Class " + className + " could not be found for audittrail setting " + defaultName);
 		}
-		if(!configObj.containsKey(baseKey+ ".constraints") ){
+		if(!map.containsKey("constraints") ){
 		 	newField.constraints = defaultCons;
 		}else{
-		 	newField.constraints = (String)configObj.get(baseKey+ ".constraints");
+		 	newField.constraints = (String)map.get( "constraints");
 		}
-		if(configObj.containsKey(baseKey+ ".mapping") ){
-		    newField.mapping = (String)configObj.get(baseKey + ".mapping");
+		if(map.containsKey("mapping") ){
+		    newField.mapping = (String)map.get("mapping");
 		}
 		
 		return newField;
     } 
 
-	public static Map<String, FieldProps> buildFieldMap(Config config){
+	public static Map<String, FieldProps> buildFieldMap(Map config){
 		Map<String, FieldProps> map = new HashMap<String, FieldProps>();
 		map.put("createdBy",FieldProps.init("createdBy","java.lang.Long", USER_CONS, null, config));
 		map.put("editedBy",FieldProps.init("editedBy", "java.lang.Long", USER_CONS, null, config));
