@@ -9,7 +9,7 @@ buildscript {
     }
 }
 
-version "3.0.4-SNAPSHOT"
+version "3.0.4"
 group "org.grails.plugins"
 
 apply plugin:"idea"
@@ -80,6 +80,7 @@ grailsPublish {
     //portalPassword = ""
 }
 
+/*
 publishing {
     repositories {
         maven {
@@ -90,5 +91,4 @@ publishing {
             }
         }
     }
-}
-
+}*/
