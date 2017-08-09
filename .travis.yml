@@ -1,0 +1,22 @@
+language: groovy
+
+jdk:
+- oraclejdk8
+
+sudo: false
+
+cache:
+  directories:
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
+  - "$HOME/.m2/"
+
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
+script: "./travis-build.sh"
+
+env:
+  global:
+  - secure: MocO0gpOAcZ8EpU2eVl8+TLzmHymufHxjcF9IjC1Eaht7nO9PhKbGd9zNBagdHPdNRfW+RaEfC0BRyFN56O4WVqSfKNr/+V85edm9DOtvhmwnHStBY/BgdfC51HgOko3XwKEjw/la8S3m7nR3rUUt9CxFvfIEPiMwmp4VYT8zlk=
+  - secure: DJRga4EV6lw/F0OYtl6dbHbxhuTwreoqqFPwU7KRTUgNFcO4V3GKfDEEGJmN0lDnD+rG4vyV/6zR/agDh0Wxq45TIQ8VVhx2+k9/7BJTmcMMagAl9sctN057795bnjjbhJdbJlQHI4EJoaE/1IVrIyzlfhNIM0u7BWqJXzYcBms=

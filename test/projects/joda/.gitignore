@@ -1,8 +1,0 @@
-.grails/
-grails-*.zip
-web-app/WEB-INF/classes/
-target/
-target-eclipse/
-c.tld
-fmt.tld
-stacktrace.log

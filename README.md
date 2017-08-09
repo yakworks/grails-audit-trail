@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/9ci/grails-audit-trail.svg?branch=grails-3-upgrade)](https://travis-ci.org/9ci/grails-audit-trail)
+
 # Overview
 
 This plugin lets you add an annotation to your domain classes so the necessary created/updated audit fields will get added. On save() the domain will get "stamped" after a new insert or update. This eliminates the need for setting up a base class.
