@@ -3,7 +3,7 @@ package gorm;
 import java.util.HashMap;
 import java.util.Map;
 
-class FieldProps {
+public class FieldProps {
 	private static final String DATE_CONS = "nullable:false, display:false, editable:false, bindable:false";
 	private static final String USER_CONS = "nullable:false, display:false, editable:false, bindable:false";
 

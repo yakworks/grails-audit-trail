@@ -2,18 +2,16 @@ package grails.plugin.audittrail
 
 import grails.core.GrailsApplication
 import gorm.FieldProps
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.apache.log4j.Logger
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 
+@CompileStatic(TypeCheckingMode.SKIP)
 class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
-
-    private static final String CREATED_DATE_FIELD = "createdDate"
-    private static final String EDITED_DATE_FIELD = "editedDate"
-    private static final String CREATED_BY_FIELD = "createdBy"
-    private static final String EDITED_BY_FIELD = "editedBy"
 
     Closure currentUserClosure
 
@@ -38,6 +36,7 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
 
     }
 
+    @CompileStatic
     void setFieldDefaults(Object entity) {
         Long time = System.currentTimeMillis()
         //assume its a new entity
@@ -96,7 +95,6 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
             def entry = session.persistenceContext.getEntry(entity)
             return !entry
         }
-        }
     }
 
     boolean isDisableAuditStamp(entity) {
@@ -105,6 +103,7 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
         return !entry
     }
 
+    @CompileStatic
     def currentUserId() {
         return currentUserClosure(applicationContext)
     }
@@ -119,6 +118,7 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
         }
     }
 
+    @CompileStatic
     Boolean isUserAuthorized() {
         def springSecurityService = applicationContext.springSecurityService
         if (springSecurityService.isLoggedIn()) {
