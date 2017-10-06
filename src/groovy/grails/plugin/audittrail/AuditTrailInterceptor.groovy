@@ -1,12 +1,10 @@
 package grails.plugin.audittrail
 
+import gorm.FieldProps
+import org.apache.commons.lang.ArrayUtils
+import org.apache.log4j.Logger
 import org.hibernate.EmptyInterceptor
 import org.hibernate.type.Type
-import org.apache.log4j.Logger
-import org.springframework.context.ApplicationContextAware
-import org.springframework.context.ApplicationContext
-import org.springframework.beans.factory.InitializingBean
-import org.apache.commons.lang.ArrayUtils
 
 class AuditTrailInterceptor extends EmptyInterceptor {
 	private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
@@ -35,12 +33,12 @@ class AuditTrailInterceptor extends EmptyInterceptor {
         if(disableAuditTrailStamp(entity)) return true
         
 	    def time = System.currentTimeMillis()
-	    ['createdDate','editedDate'].each{ key->
+	    [FieldProps.CREATED_DATE_KEY, FieldProps.EDITED_DATE_KEY].each{ key->
 			def valToSet = auditTrailHelper.setDateField(entity,key, time)
 			if(valToSet)
 			    setValue(currentState, propertyNames, fieldPropsMap.get(key).name, valToSet)
 		}
-		['createdBy','editedBy'].each{ key->
+		[FieldProps.CREATED_BY_KEY, FieldProps.EDITED_BY_KEY].each{ key->
 			def valToSet = auditTrailHelper.setUserField(entity,key)
 			if(valToSet)
 			    setValue(currentState, propertyNames, fieldPropsMap.get(key).name, valToSet)

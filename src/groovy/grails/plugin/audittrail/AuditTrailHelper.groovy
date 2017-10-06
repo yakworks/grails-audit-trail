@@ -1,5 +1,6 @@
 package grails.plugin.audittrail
 
+import gorm.FieldProps
 import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.springframework.beans.factory.InitializingBean
@@ -8,11 +9,6 @@ import org.springframework.context.ApplicationContextAware
 
 class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
-
-    private static final String CREATED_DATE_FIELD = "createdDate"
-    private static final String EDITED_DATE_FIELD = "editedDate"
-    private static final String CREATED_BY_FIELD = "createdBy"
-    private static final String EDITED_BY_FIELD = "editedBy"
 
     Closure currentUserClosure
 
@@ -40,11 +36,11 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     void setFieldDefaults(Object entity) {
         Long time = System.currentTimeMillis()
         //assume its a new entity
-        [CREATED_DATE_FIELD, EDITED_DATE_FIELD].each { key ->
+        [FieldProps.CREATED_DATE_KEY, FieldProps.EDITED_DATE_KEY].each { key ->
             setDateField(entity, key, time)
         }
 
-        [CREATED_BY_FIELD, EDITED_BY_FIELD].each { key ->
+        [FieldProps.CREATED_BY_KEY, FieldProps.EDITED_BY_KEY].each { key ->
             setUserField(entity, key)
         }
     }
@@ -83,12 +79,12 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
      * @return boolean
      */
     boolean isNewEntity(def entity) {
-        String createdDateFieldName = fieldPropsMap.get(CREATED_DATE_FIELD).name
+        String createdDateFieldName = fieldPropsMap.get(FieldProps.CREATED_DATE_KEY).name
         MetaProperty createdDateProperty = entity.hasProperty(createdDateFieldName)
 
         //see issue#41
         if(createdDateProperty != null) {
-            Date existingValue = entity.getProperty(createdDateFieldName)
+            def existingValue = createdDateProperty.getProperty(entity)
             return (existingValue == null)
         } else {
             def session = applicationContext.sessionFactory.currentSession
