@@ -68,7 +68,7 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     /**
      * Checks if the given domain instance is new
      *
-     * it first checks for the createdDate property, if property exists and is not null, returns false.
+     * it first checks for the createdDate property, if property exists and is not null, returns false, true if null
      * else If createdDate property is not defined, it checks if the domain is attached to session and exists in persistence context.
      *
      * @param entity
