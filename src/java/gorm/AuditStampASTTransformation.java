@@ -48,11 +48,11 @@ public class AuditStampASTTransformation implements ASTTransformation {
 				doBeforeValidate(classNode);
 				//debugFieldNodes(classNode);
 
-				createUserField( classNode, fprops.get("editedBy"));
-				createUserField( classNode, fprops.get("createdBy"));
+				createUserField( classNode, fprops.get(FieldProps.EDITED_BY_KEY));
+				createUserField( classNode, fprops.get(FieldProps.CREATED_BY_KEY));
 
-				createDateField( classNode, fprops.get("editedDate"));
-				createDateField( classNode, fprops.get("createdDate"));
+				createDateField( classNode, fprops.get(FieldProps.EDITED_DATE_KEY));
+				createDateField( classNode, fprops.get(FieldProps.CREATED_DATE_KEY));
 
 			}
 		}

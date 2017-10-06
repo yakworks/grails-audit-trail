@@ -1,11 +1,14 @@
 package nine.tests
 
+import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
+import org.codehaus.groovy.grails.commons.GrailsDomainClass
+
 class ChildDomTests extends BaseInt {
 
 	def grailsApplication
 
 	void testConstaints() {
-		def art = grailsApplication.getDomainClass("nine.tests.ChildDom")
+		DefaultGrailsDomainClass art = grailsApplication.getDomainClass("nine.tests.ChildDom")
 		assert art
 		assert art.constraints.childProp.getAppliedConstraint('nullable').isNullable() == false
 		assert art.constraints.childProp.getAppliedConstraint('blank').isBlank() == false
