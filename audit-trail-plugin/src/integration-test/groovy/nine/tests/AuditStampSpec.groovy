@@ -5,7 +5,6 @@ import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.test.mixin.integration.Integration
 import grails.transaction.Rollback
-import groovy.sql.GroovyResultSet
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import org.apache.commons.lang.time.DateUtils
@@ -16,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.AuthorityUtils
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.context.SecurityContextHolder as SCH
+import spock.lang.Issue
 import spock.lang.Specification
 
 import javax.sql.DataSource
@@ -191,6 +191,46 @@ class AuditStampSpec extends Specification {
 		assert DateUtils.isSameDay(data.editedDate, new Date())
 
 		assert currentUser.id == data.whoUpdated
+	}
+
+	@Issue("https://github.com/9ci/grails-audit-trail/issues/41")
+	void "test pdate does not change createdDate when session is cleared"() {
+		setup:
+		Date today = new Date()
+		Date yesterday = today - 1
+		java.sql.Date yesterdaySQL = new java.sql.Date(yesterday.getTime())
+		Sql sql = new Sql(sessionFactory.getCurrentSession().connection())
+
+		sql.execute("insert into TestDomains (oid,version,name, createdBy, createdDate, whoUpdated, editedDate) "+
+				" values (?,?,?,?,?,?,?)", [2,0,"xxx", 0, yesterdaySQL,0, yesterdaySQL])
+
+
+		when:
+		TestDomain dom = TestDomain.get(2)
+
+		then:
+		dom != null
+
+		when:
+		dom.name="new name"
+		//clear session to test that createdDate does not get reset for detached objects.
+		sessionFactory.currentSession.clear()
+
+		dom.save(flush:true,failOnError:true)
+
+		String sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
+
+		Map data = sql.firstRow(sqlCall)
+
+		then:
+		assert data != null
+		assert dom.id == data.oid
+		assert data.editedDate != null
+		assert data.createdDate != null
+
+		assert DateUtils.isSameDay(data.editedDate, new Date()), "edited Date should have been set to today"
+		assert DateUtils.isSameDay(data.createdDate, yesterday), "Created date should have been changed"
+
 	}
 
 	void test_disableAuditTrailStamp_fail() {
