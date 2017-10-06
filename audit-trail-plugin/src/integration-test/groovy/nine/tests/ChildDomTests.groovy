@@ -1,6 +1,5 @@
 package nine.tests
 
-import grails.artefact.DomainClass
 import grails.core.GrailsDomainClass
 import grails.test.mixin.integration.Integration
 import grails.transaction.Rollback

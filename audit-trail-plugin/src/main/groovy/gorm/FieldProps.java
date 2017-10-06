@@ -6,7 +6,13 @@ import java.util.Map;
 class FieldProps {
 	private static final String DATE_CONS = "nullable:false, display:false, editable:false, bindable:false";
 	private static final String USER_CONS = "nullable:false, display:false, editable:false, bindable:false";
-	
+
+	public static final String CREATED_DATE_KEY = "createdDate";
+	public static final String EDITED_DATE_KEY = "editedDate";
+	public static final String CREATED_BY_KEY = "createdBy";
+	public static final String EDITED_BY_KEY = "editedBy";
+
+
 	String name;
 	Class  type;
 	//Object initValue;
@@ -58,11 +64,11 @@ class FieldProps {
 
 	public static Map<String, FieldProps> buildFieldMap(Map config){
 		Map<String, FieldProps> map = new HashMap<String, FieldProps>();
-		map.put("createdBy",FieldProps.init("createdBy","java.lang.Long", USER_CONS, null, config));
-		map.put("editedBy",FieldProps.init("editedBy", "java.lang.Long", USER_CONS, null, config));
+		map.put(CREATED_BY_KEY,FieldProps.init(CREATED_BY_KEY,"java.lang.Long",USER_CONS,null,config));
+		map.put(EDITED_BY_KEY,FieldProps.init(EDITED_BY_KEY,"java.lang.Long",USER_CONS,null,config));
 
-		map.put("editedDate",FieldProps.init("editedDate", "java.util.Date", DATE_CONS, null, config));
-		map.put("createdDate",FieldProps.init("createdDate", "java.util.Date",DATE_CONS, null, config));
+		map.put(EDITED_DATE_KEY,FieldProps.init(EDITED_DATE_KEY,"java.util.Date",DATE_CONS,null,config));
+		map.put(CREATED_DATE_KEY,FieldProps.init(CREATED_DATE_KEY,"java.util.Date",DATE_CONS,null,config));
 		return map;
 	}
 	

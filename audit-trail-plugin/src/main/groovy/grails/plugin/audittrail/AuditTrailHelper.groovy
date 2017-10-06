@@ -1,6 +1,7 @@
 package grails.plugin.audittrail
 
 import grails.core.GrailsApplication
+import gorm.FieldProps
 import org.apache.log4j.Logger
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -40,11 +41,11 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     void setFieldDefaults(Object entity) {
         Long time = System.currentTimeMillis()
         //assume its a new entity
-        [CREATED_DATE_FIELD, EDITED_DATE_FIELD].each { key ->
+        [FieldProps.CREATED_DATE_KEY, FieldProps.EDITED_DATE_KEY].each { key ->
             setDateField(entity, key, time)
         }
 
-        [CREATED_BY_FIELD, EDITED_BY_FIELD].each { key ->
+        [FieldProps.CREATED_BY_KEY, FieldProps.EDITED_BY_KEY].each { key ->
             setUserField(entity, key)
         }
     }
@@ -83,17 +84,18 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
      * @return boolean
      */
     boolean isNewEntity(def entity) {
-        String createdDateFieldName = fieldPropsMap.get(CREATED_DATE_FIELD).name
+        String createdDateFieldName = fieldPropsMap.get(FieldProps.CREATED_DATE_KEY).name
         MetaProperty createdDateProperty = entity.hasProperty(createdDateFieldName)
 
         //see issue#41
         if(createdDateProperty != null) {
-            Date existingValue = entity.getProperty(createdDateFieldName)
+            def existingValue = createdDateProperty.getProperty(entity)
             return (existingValue == null)
         } else {
             def session = applicationContext.sessionFactory.currentSession
             def entry = session.persistenceContext.getEntry(entity)
             return !entry
+        }
         }
     }
 
