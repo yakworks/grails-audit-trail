@@ -65,11 +65,28 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
         return valToSet
     }
 
-    boolean isNewEntity(entity) {
+    /**
+     * Checks if the given domain instance is new
+     *
+     * it first checks for the createdDate property, if property exists and is not null, returns false.
+     * else If createdDate property is not defined, it checks if the domain is attached to session and exists in persistence context.
+     *
+     * @param entity
+     * @return boolean
+     */
+    boolean isNewEntity(def entity) {
+        String createdDateFieldName = fieldPropsMap.get("createdDate").name
+        MetaProperty createdDateProperty = entity.hasProperty(createdDateFieldName)
 
-        def session = applicationContext.sessionFactory.currentSession
-        def entry = session.persistenceContext.getEntry(entity)
-        return !entry
+        //see issue#41
+        if(createdDateProperty != null) {
+            Date existingValue = entity.getProperty(createdDateFieldName)
+            return (existingValue == null)
+        } else {
+            def session = applicationContext.sessionFactory.currentSession
+            def entry = session.persistenceContext.getEntry(entity)
+            return !entry
+        }
     }
 
     boolean isDisableAuditStamp(entity) {

@@ -6,11 +6,13 @@ import grails.test.mixin.integration.IntegrationTestMixin
 import groovy.sql.Sql
 import org.apache.commons.lang.time.DateUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
 import org.codehaus.groovy.grails.web.binding.DefaultASTDatabindingHelper
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.AuthorityUtils
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.context.SecurityContextHolder as SCH
+import spock.lang.Issue
 
 /**
  * Uses the doms domain to test the created by and edited by fields and CreateEditeStamp ASTrandformer
@@ -53,8 +55,11 @@ class AuditStampTests {
 		assert art.constraints.updatedBy.getAppliedConstraint('max').maxValue  == 90000l
 
 		def l = TestDomain."${DefaultASTDatabindingHelper.DEFAULT_DATABINDING_WHITELIST}"
-		assert l == ['name']
-		assert l.size() == 1
+		assert l.contains("name")
+		assert !l.contains("createdDate")
+		assert !l.contains("createdBy")
+		assert !l.contains("editedDate")
+		assert !l.contains("updatedBy")
 
 		//def prop= art.getPropertyByName("updatedBy") 
 	}
@@ -140,6 +145,42 @@ class AuditStampTests {
 		assert dom.id == data.oid
 		assert data.editedDate != null
 		assert DateUtils.isSameDay(data.editedDate, new Date())
+		def authUser = login()
+		assert authUser.id == data.whoUpdated
+	}
+
+	@Issue("https://github.com/9ci/grails-audit-trail/issues/41")
+	void test_update_doesnot_change_createdDate_when_session_is_cleared() {
+		Date today = new Date()
+		Date yesterday = today - 1
+		java.sql.Date yesterdaySQL = new java.sql.Date(yesterday.getTime())
+		Sql sql = new Sql(sessionFactory.getCurrentSession().connection())
+
+		sql.execute("insert into TestDomains (oid,version,name, createdBy, createdDate, whoUpdated, editedDate) "+
+				" values (?,?,?,?,?,?,?)", [2,0,"xxx", 0, yesterdaySQL,0, yesterdaySQL])
+
+
+		TestDomain dom = TestDomain.get(2)
+		assert dom != null
+		dom.name="new name"
+
+		//clear session to test that createdDate does not get reset for detached objects.
+		sessionFactory.currentSession.clear()
+		DomainClassGrailsPlugin.PROPERTY_INSTANCE_MAP.get().clear()
+
+		dom.save(flush:true,failOnError:true)
+
+		String sqlCall = 'select oid, createdBy, createdDate, whoUpdated, editedDate from TestDomains where oid = ' + dom.id
+
+		Map data = sql.firstRow(sqlCall)
+		assert data != null
+		assert dom.id == data.oid
+		assert data.editedDate != null
+		assert data.createdDate != null
+
+		assert DateUtils.isSameDay(data.editedDate, new Date()), "edited Date should have been set to today"
+		assert DateUtils.isSameDay(data.createdDate, yesterday), "Created date should have been changed"
+
 		def authUser = login()
 		assert authUser.id == data.whoUpdated
 	}
