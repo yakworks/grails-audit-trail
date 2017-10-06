@@ -9,6 +9,11 @@ import org.springframework.context.ApplicationContextAware
 class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
 
+    private static final String CREATED_DATE_FIELD = "createdDate"
+    private static final String EDITED_DATE_FIELD = "editedDate"
+    private static final String CREATED_BY_FIELD = "createdBy"
+    private static final String EDITED_BY_FIELD = "editedBy"
+
     Closure currentUserClosure
 
     //injected
@@ -33,12 +38,13 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     }
 
     void setFieldDefaults(Object entity) {
-        def time = System.currentTimeMillis()
+        Long time = System.currentTimeMillis()
         //assume its a new entity
-        ['createdDate', 'editedDate'].each { key ->
+        [CREATED_DATE_FIELD, EDITED_DATE_FIELD].each { key ->
             setDateField(entity, key, time)
         }
-        ['createdBy', 'editedBy'].each { key ->
+
+        [CREATED_BY_FIELD, EDITED_BY_FIELD].each { key ->
             setUserField(entity, key)
         }
     }
@@ -55,13 +61,15 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     }
 
     def setUserField(entity, String fieldName) {
-        def field = fieldPropsMap.get(fieldName).name
-        def property = entity.hasProperty(field)
+        String field = fieldPropsMap.get(fieldName).name
+        MetaProperty property = entity.hasProperty(field)
+
         def valToSet
         if (property) {
             valToSet = currentUserId()
             entity.setProperty(field, valToSet)
         }
+
         return valToSet
     }
 
@@ -75,7 +83,7 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
      * @return boolean
      */
     boolean isNewEntity(def entity) {
-        String createdDateFieldName = fieldPropsMap.get("createdDate").name
+        String createdDateFieldName = fieldPropsMap.get(CREATED_DATE_FIELD).name
         MetaProperty createdDateProperty = entity.hasProperty(createdDateFieldName)
 
         //see issue#41
