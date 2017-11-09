@@ -21,11 +21,11 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     static Long ANONYMOUS_USER = 0
 
     void initializeFields(Object entity) {
+        //exit fast if its off
+        if (entity.hasProperty('disableAuditTrailStamp') && entity.disableAuditTrailStamp) return
 
         //if its not new then just exit as we will assume an updated entity is setup correctly
         if (!isNewEntity(entity)) return
-        //exit fast if its off
-        if (entity.hasProperty('disableAuditTrailStamp') && entity.disableAuditTrailStamp) return
 
         if (log.isDebugEnabled()) log.debug "initializeFields for new $entity"
         setFieldDefaults(entity)
