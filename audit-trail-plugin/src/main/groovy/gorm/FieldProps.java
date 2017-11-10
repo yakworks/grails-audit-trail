@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class FieldProps {
+	public static final String CONFIG_KEY = "grails.plugin.audittrail";
 	private static final String DATE_CONS = "nullable:false, display:false, editable:false, bindable:false";
 	private static final String USER_CONS = "nullable:false, display:false, editable:false, bindable:false";
 	
@@ -23,7 +24,7 @@ class FieldProps {
 		//System.out.println("ConfigObject : " + co);
 		if(configObj == null || configObj.isEmpty()) return null;
 
-		String baseKey = "grails.plugin.audittrail." + defaultName;
+		String baseKey = CONFIG_KEY + "." + defaultName;
 
 		Map map = (Map) getMap(configObj, baseKey);
 		if(map == null){

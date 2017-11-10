@@ -41,6 +41,12 @@ public class AuditStampASTTransformation implements ASTTransformation {
 	private static final Token OPERATOR_ASSIGNMENT = new Token(Types.EQUAL,"=", -1,-1);
 
 	public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
+		Boolean enabled = (Boolean)FieldProps.getMap(CO, FieldProps.CONFIG_KEY + "." + "enabled");
+		if(enabled != null && enabled == false) {
+			System.out.println("AuditTrail is disabled");
+			return;
+		}
+
 		Map<String, FieldProps> fprops = FieldProps.buildFieldMap(CO);
 
 		for (ASTNode astNode : astNodes) {

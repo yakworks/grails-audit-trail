@@ -10,6 +10,7 @@ grails.gorm.default.mapping = {
 grails{
 	plugin{
 		audittrail{
+			enabled = true
 			createdBy.field  = "createdBy"
 			createdBy.type   = "java.lang.Long" //fully qualified class name if not a java.lang.(String,Long,etc..)
 
