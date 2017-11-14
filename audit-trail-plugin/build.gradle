@@ -9,7 +9,7 @@ buildscript {
     }
 }
 
-version "3.0.6"
+version "3.0.7"
 group "org.grails.plugins"
 
 apply plugin:"idea"
@@ -79,6 +79,7 @@ grailsPublish {
     //portalUser = ""
     //portalPassword = ""
 }
+
 
 /*
 publishing {

@@ -5,6 +5,7 @@ import org.apache.log4j.Logger
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import gorm.FieldProps
 
 class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
@@ -33,12 +34,13 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     }
 
     void setFieldDefaults(Object entity) {
-        def time = System.currentTimeMillis()
+        Long time = System.currentTimeMillis()
         //assume its a new entity
-        ['createdDate', 'editedDate'].each { key ->
+        [FieldProps.CREATED_DATE_KEY, FieldProps.EDITED_DATE_KEY].each { key ->
             setDateField(entity, key, time)
         }
-        ['createdBy', 'editedBy'].each { key ->
+
+        [FieldProps.CREATED_BY_KEY, FieldProps.EDITED_BY_KEY].each { key ->
             setUserField(entity, key)
         }
     }
@@ -55,21 +57,40 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     }
 
     def setUserField(entity, String fieldName) {
-        def field = fieldPropsMap.get(fieldName).name
-        def property = entity.hasProperty(field)
+        String field = fieldPropsMap.get(fieldName).name
+        MetaProperty property = entity.hasProperty(field)
+
         def valToSet
         if (property) {
             valToSet = currentUserId()
             entity.setProperty(field, valToSet)
         }
+
         return valToSet
     }
 
-    boolean isNewEntity(entity) {
+    /**
+     * Checks if the given domain instance is new
+     *
+     * it first checks for the createdDate property, if property exists and is not null, returns false, true if null
+     * else If createdDate property is not defined, it checks if the domain is attached to session and exists in persistence context.
+     *
+     * @param entity
+     * @return boolean
+     */
+    boolean isNewEntity(def entity) {
+        String createdDateFieldName = fieldPropsMap.get(FieldProps.CREATED_DATE_KEY).name
+        MetaProperty createdDateProperty = entity.hasProperty(createdDateFieldName)
 
-        def session = applicationContext.sessionFactory.currentSession
-        def entry = session.persistenceContext.getEntry(entity)
-        return !entry
+        //see issue#41
+        if(createdDateProperty != null) {
+            def existingValue = createdDateProperty.getProperty(entity)
+            return (existingValue == null)
+        } else {
+            def session = applicationContext.sessionFactory.currentSession
+            def entry = session.persistenceContext.getEntry(entity)
+            return !entry
+        }
     }
 
     boolean isDisableAuditStamp(entity) {

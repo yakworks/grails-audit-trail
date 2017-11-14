@@ -1,6 +1,6 @@
 .grails/
-/.gradle
-/build
+/.gradle/*
+/build/*
 /plugin.xml
 grails-*.zip
 web-app/WEB-INF
