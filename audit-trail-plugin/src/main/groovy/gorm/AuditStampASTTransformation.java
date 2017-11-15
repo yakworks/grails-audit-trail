@@ -42,10 +42,8 @@ public class AuditStampASTTransformation implements ASTTransformation {
 
 	public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
 		Boolean enabled = (Boolean)FieldProps.getMap(CO, FieldProps.CONFIG_KEY + "." + "enabled");
-		if(enabled != null && enabled == false) {
-			System.out.println("AuditTrail is disabled");
-			return;
-		}
+		if(enabled != null && enabled == false) return;
+
 
 		Map<String, FieldProps> fprops = FieldProps.buildFieldMap(CO);
 
