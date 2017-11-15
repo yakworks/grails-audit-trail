@@ -51,7 +51,7 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
     }
 
     @CompileStatic
-    Date setDateField(def entity, String fieldName, time = System.currentTimeMillis()) {
+    Date setDateField(def entity, String fieldName, long time = System.currentTimeMillis()) {
         String field = fieldPropsMap.get(fieldName).name
         MetaProperty property = entity.hasProperty(field)
         Date valToSet
