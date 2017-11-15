@@ -10,6 +10,8 @@ class AuditTrailsGrailsPluginSupport {
 
 	static Closure doWithSpring = {
 
+		//dont register beans if audit trail is disabled.
+		if(grailsApplication.config.grails.plugin.audittrail.enabled == false) return
 		def fprops = gorm.FieldProps.buildFieldMap(grailsApplication.config)
 
 		auditTrailHelper(AuditTrailHelper) {
