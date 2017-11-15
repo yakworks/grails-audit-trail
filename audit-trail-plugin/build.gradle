@@ -9,7 +9,6 @@ buildscript {
     }
 }
 
-version "3.0.7"
 group "org.grails.plugins"
 
 apply plugin:"idea"
@@ -20,6 +19,10 @@ repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
 }
+
+
+project.ext.isSnapshot =  version.toString().endsWith("-SNAPSHOT")
+apply from:"publish.gradle"
 
 dependencies {
     provided "org.springframework.boot:spring-boot-starter-logging"
@@ -41,55 +44,8 @@ dependencies {
     compile 'org.grails.plugins:spring-security-core:3.1.2'
 
     testCompile "org.grails:grails-plugin-testing"
-
-    //testCompile "org.grails.plugins:geb"
-    //testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
-    //testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
 }
 
 jar {
     exclude 'nine/tests/**'
 }
-
-grailsPublish {
-    user = System.getenv("BINTRAY_USER") ?: project.bintrayUser
-    key = System.getenv("BINTRAY_KEY") ?: project.bintrayKey
-
-    title = "Audit Trails Grails Plugin"
-    desc = "Audit Trails Grails Plugin"
-    developers = [joshua:"Joshua B", "snimavat": "Sudhir N"]
-
-
-    githubSlug = '9ci/grails-audit-trail'
-    issueTrackerUrl = 'https://github.com/9ci/grails-audit-trail/issues'
-    vcsUrl = 'https://github.com/9ci/grails-audit-trail'
-
-    license {
-        name = 'Apache-2.0'
-    }
-
-    repo = 'grails-plugins'
-    userOrg = '9ci' //the Org to publish this under in
-
-    bintray {
-        //override plufin only if it is snapshot
-        override = rootProject.version.endsWith("SNAPSHOT")
-    }
-
-    //portalUser = ""
-    //portalPassword = ""
-}
-
-
-/*
-publishing {
-    repositories {
-        maven {
-            url "http://repo.9ci.com/artifactory/grails-plugins"
-            credentials {
-                username "$artifactoryUsername"
-                password  "$artifactoryPassword"
-            }
-        }
-    }
-}*/
