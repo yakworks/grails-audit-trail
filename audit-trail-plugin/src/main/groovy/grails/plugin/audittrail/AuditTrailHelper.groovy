@@ -1,6 +1,7 @@
 package grails.plugin.audittrail
 
 import grails.core.GrailsApplication
+import groovy.transform.CompileStatic
 import org.apache.log4j.Logger
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -33,6 +34,7 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
 
     }
 
+    @CompileStatic
     void setFieldDefaults(Object entity) {
         Long time = System.currentTimeMillis()
         //assume its a new entity
