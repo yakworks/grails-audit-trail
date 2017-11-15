@@ -1,6 +1,7 @@
 package grails.plugin.audittrail
 
 import gorm.FieldProps
+import groovy.transform.CompileStatic
 import org.apache.commons.lang.ArrayUtils
 import org.apache.log4j.Logger
 import org.hibernate.EmptyInterceptor
@@ -11,19 +12,17 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 	
 	//injected
 	AuditTrailHelper auditTrailHelper
-	Map fieldPropsMap	
+	Map<String, FieldProps> fieldPropsMap
 
 	boolean onFlushDirty(Object entity, Serializable id, Object[] currentState,Object[] previousState, String[] propertyNames,Type[] types) {
         //exit fast if its off
         if(disableAuditTrailStamp(entity)) return true
         
-		def dval = auditTrailHelper.setDateField(entity,'editedDate', System.currentTimeMillis())
-		if(dval)
-			setValue(currentState, propertyNames, fieldPropsMap.get('editedDate').name, dval)
+		Date dval = auditTrailHelper.setDateField(entity,'editedDate', System.currentTimeMillis())
+		if(dval) setValue(currentState, propertyNames, fieldPropsMap.get('editedDate').name, dval)
 
 		def uval = auditTrailHelper.setUserField(entity,'editedBy')
-		if(uval)
-		    setValue(currentState, propertyNames, fieldPropsMap.get('editedBy').name, uval)
+		if(uval) setValue(currentState, propertyNames, fieldPropsMap.get('editedBy').name, uval)
 		
 		return true
 	}
@@ -32,7 +31,7 @@ class AuditTrailInterceptor extends EmptyInterceptor {
 	    //exit fast if its off
         if(disableAuditTrailStamp(entity)) return true
         
-	    def time = System.currentTimeMillis()
+	    long time = System.currentTimeMillis()
 	    [FieldProps.CREATED_DATE_KEY, FieldProps.EDITED_DATE_KEY].each{ key->
 			def valToSet = auditTrailHelper.setDateField(entity,key, time)
 			if(valToSet)

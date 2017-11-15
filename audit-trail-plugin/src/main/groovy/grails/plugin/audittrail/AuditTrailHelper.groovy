@@ -2,6 +2,7 @@ package grails.plugin.audittrail
 
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.apache.log4j.Logger
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -9,22 +10,24 @@ import org.springframework.context.ApplicationContextAware
 import gorm.FieldProps
 
 class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
+    private static final String DISABLE_AUDITSTAMP_FIELD = 'disableAuditTrailStamp'
     private static final Logger log = Logger.getLogger(AuditTrailInterceptor)
 
     Closure currentUserClosure
 
     //injected
     GrailsApplication grailsApplication
-    Map fieldPropsMap
+    Map<String, FieldProps> fieldPropsMap
     String companyIdField
 
     ApplicationContext applicationContext
 
     static Long ANONYMOUS_USER = 0
 
+    @CompileStatic
     void initializeFields(Object entity) {
         //exit fast if its off
-        if (entity.hasProperty('disableAuditTrailStamp') && entity.disableAuditTrailStamp) return
+        if (entity.hasProperty('disableAuditTrailStamp') && entity[DISABLE_AUDITSTAMP_FIELD]) return
 
         //if its not new then just exit as we will assume an updated entity is setup correctly
         if (!isNewEntity(entity)) return
@@ -47,17 +50,19 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
         }
     }
 
-    def setDateField(entity, String fieldName, time = System.currentTimeMillis()) {
-        def field = fieldPropsMap.get(fieldName).name
-        def property = entity.hasProperty(field)
-        def valToSet
+    @CompileStatic
+    Date setDateField(def entity, String fieldName, time = System.currentTimeMillis()) {
+        String field = fieldPropsMap.get(fieldName).name
+        MetaProperty property = entity.hasProperty(field)
+        Date valToSet
         if (property) {
             valToSet = property.getType().newInstance([time] as Object[])
-            entity.setProperty(field, valToSet)
+            entity[field] = valToSet
         }
         return valToSet
     }
 
+    @CompileStatic
     def setUserField(entity, String fieldName) {
         String field = fieldPropsMap.get(fieldName).name
         MetaProperty property = entity.hasProperty(field)
@@ -65,7 +70,7 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
         def valToSet
         if (property) {
             valToSet = currentUserId()
-            entity.setProperty(field, valToSet)
+            entity[field] =  valToSet
         }
 
         return valToSet
@@ -80,13 +85,14 @@ class AuditTrailHelper implements ApplicationContextAware, InitializingBean {
      * @param entity
      * @return boolean
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     boolean isNewEntity(def entity) {
         String createdDateFieldName = fieldPropsMap.get(FieldProps.CREATED_DATE_KEY).name
         MetaProperty createdDateProperty = entity.hasProperty(createdDateFieldName)
 
         //see issue#41
         if(createdDateProperty != null) {
-            def existingValue = createdDateProperty.getProperty(entity)
+            Date existingValue = createdDateProperty.getProperty(entity)
             return (existingValue == null)
         } else {
             def session = applicationContext.sessionFactory.currentSession

@@ -14,11 +14,10 @@ public class FieldProps {
 	public static final String EDITED_BY_KEY = "editedBy";
 
 
-	String name;
-	Class  type;
-	//Object initValue;
-	String constraints;
-	String mapping;
+	public String name;
+	public Class  type;
+	public String constraints;
+	public String mapping;
 
 	private static Object getConfigValue(Map config, String key, Object defaultValue) {
 		//System.out.println(key + ":" + defaultValue.toString() + ":" + config.get(key));
