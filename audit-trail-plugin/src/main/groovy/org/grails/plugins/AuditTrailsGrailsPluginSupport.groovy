@@ -27,6 +27,7 @@ class AuditTrailsGrailsPluginSupport {
 
 		auditStampEventListener(AuditStampEventListener, ref('hibernateDatastore')) {
 			grailsApplication = grailsApplication
+			springSecurityService = ref("springSecurityService")
 			fieldProps = fprops
 		}
 

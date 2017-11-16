@@ -4,6 +4,8 @@ import gorm.AuditStamp
 import gorm.FieldProps
 import grails.core.GrailsApplication
 import grails.core.GrailsDomainClass
+import grails.plugin.springsecurity.SpringSecurityService
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.grails.core.artefact.DomainClassArtefactHandler
 import org.grails.datastore.mapping.core.Datastore
@@ -20,7 +22,9 @@ import javax.annotation.PostConstruct
 
 @CompileStatic
 class AuditStampEventListener extends AbstractPersistenceEventListener {
+
     GrailsApplication grailsApplication
+    SpringSecurityService springSecurityService
 
     final List<String> auditStampedEntities = []
     Map<String, FieldProps> fieldProps
@@ -68,6 +72,13 @@ class AuditStampEventListener extends AbstractPersistenceEventListener {
 
     void setUserField(String prop, EntityAccess ea) {
         ea.setProperty(fieldProps[prop].name, 1L)
+    }
+
+    @CompileDynamic
+    Serializable getCurrentUser() {
+        if(springSecurityService.isLoggedIn()) return springSecurityService.principal.id
+        else return 0
+
     }
 
     @Override
