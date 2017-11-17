@@ -28,24 +28,8 @@ class TestDomainTests extends Specification {
 		}
 		assert data.metaClass.hasProperty(data,"constraints")
     }
-    
-    void testSave() {
-		when:
-		TestDomain d = new TestDomain()
-		d.name = "test"
 
-		then:
-		assert config.grails.plugin.audittrail
 
-		when:
-		d.auditTrailHelper = AuditTrailHelper.mockForUnitTest(config)
-		d.save(failOnError:true)
-
-		then:
-		d.createdBy == 1
-		d.updatedBy == 1
-    }
-    
     void test_new_bindable_SanityCheck() {
 		when:
 		TestDomain d = new TestDomain()
@@ -53,13 +37,6 @@ class TestDomainTests extends Specification {
 
 		then:
 		assert config.grails.plugin.audittrail
-
-		when:
-		d.auditTrailHelper = AuditTrailHelper.mockForUnitTest(config)
-		d.save(failOnError:true)
-
-		then:
-        assert d.createdBy == 1
-
+        d.createdBy == null
     }
 }
