@@ -5,6 +5,7 @@ import gorm.FieldProps
 import grails.core.GrailsApplication
 import grails.core.GrailsDomainClass
 import grails.plugin.springsecurity.SpringSecurityService
+import grails.util.GrailsClassUtils
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.grails.core.artefact.DomainClassArtefactHandler
@@ -13,6 +14,7 @@ import org.grails.datastore.mapping.engine.EntityAccess
 import org.grails.datastore.mapping.engine.event.*
 import org.grails.datastore.mapping.model.PersistentEntity
 import org.springframework.context.ApplicationEvent
+import org.springframework.core.annotation.AnnotationUtils
 
 import javax.annotation.PostConstruct
 
@@ -23,7 +25,7 @@ class AuditStampEventListener extends AbstractPersistenceEventListener {
     GrailsApplication grailsApplication
     SpringSecurityService springSecurityService
 
-    final List<String> auditStampedEntities = []
+    final Set<String> auditStampedEntities = new HashSet<String>()
     Map<String, FieldProps> fieldProps
 
     private Closure<Serializable> currentUserClosure
@@ -36,35 +38,32 @@ class AuditStampEventListener extends AbstractPersistenceEventListener {
     void init() {
         GrailsDomainClass[] domains = grailsApplication.getArtefacts(DomainClassArtefactHandler.TYPE) as GrailsDomainClass[]
         for (GrailsDomainClass domain : domains) {
-            if (domain.clazz.getAnnotation(AuditStamp)) {
-                auditStampedEntities << domain.clazz.name
-            }
+           if(isAuditStamped(domain.clazz))  auditStampedEntities << domain.clazz.name
         }
 
         initCurrentUserClosure()
     }
 
+    //check if the given domain class should be audit stamped.
+    boolean isAuditStamped(Class domainClass) {
+        return AnnotationUtils.findAnnotation(domainClass, AuditStamp) &&  !isAuditStampDisabled(domainClass)
+    }
+
+    boolean isAuditStampDisabled(Class clazz) {
+        GrailsClassUtils.getStaticPropertyValue(clazz, DISABLE_AUDITSTAMP_FIELD) == true
+    }
 
     @Override
     protected void onPersistenceEvent(AbstractPersistenceEvent event) {
         EntityAccess ea = event.entityAccess
         PersistentEntity entity = event.entity
-        def entityObject = event.entityObject
 
-        if (entity == null || !auditStampedEntities.contains(entity.name) || isAuditStampDisabled(ea, entityObject)) return
+        if (entity == null || !auditStampedEntities.contains(entity.name) ) return
 
-        if (event.getEventType() == EventType.PreInsert) {
-            beforeInsert(event.getEntity(), event.getEntityAccess())
-        } else if (event.getEventType() == EventType.PreUpdate) {
-            beforeUpdate(event.getEntity(), event.getEntityAccess())
-        } else if (event.getEventType() == EventType.Validation) {
-            beforeValidate(event.getEntity(), event.getEntityAccess())
-        }
+        if (event.getEventType() == EventType.PreInsert) beforeInsert(entity, ea)
+        else if (event.getEventType() == EventType.PreUpdate) beforeUpdate(entity, ea)
+        else if (event.getEventType() == EventType.Validation) beforeValidate(entity, ea)
 
-    }
-
-    boolean isAuditStampDisabled(EntityAccess ea, def entity) {
-        return entity[DISABLE_AUDITSTAMP_FIELD] == true
     }
 
     private void beforeInsert(PersistentEntity entity, EntityAccess ea) {
@@ -112,7 +111,7 @@ class AuditStampEventListener extends AbstractPersistenceEventListener {
     private boolean isNewEntity(EntityAccess ea) {
         String createdDateFieldName = fieldProps.get(FieldProps.CREATED_DATE_KEY).name
         def value = ea.getPropertyValue(createdDateFieldName)
-        return value != null
+        return value == null
     }
 
     Serializable getCurrentUserId() {
@@ -128,7 +127,7 @@ class AuditStampEventListener extends AbstractPersistenceEventListener {
             if (springSecurityService.isLoggedIn()) {
                 return springSecurityService.principal.id
             } else {
-                return 0 //fall back
+                return 0L //fall back
             }
         }
     }

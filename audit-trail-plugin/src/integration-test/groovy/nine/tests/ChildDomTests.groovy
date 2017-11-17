@@ -33,6 +33,6 @@ class ChildDomTests extends BaseInt {
 		ChildDom cdom = new ChildDom(childProp:"test")
 
 		then:
-		assert cdom.save()
+		cdom.save(flush:true, failOnError:true)
 	}
 }

@@ -13,18 +13,6 @@ class AuditTrailsGrailsPluginSupport {
 		if(grailsApplication.config.grails.plugin.audittrail.enabled == false) return
 		def fprops = gorm.FieldProps.buildFieldMap(grailsApplication.config)
 
-		/*
-		auditTrailHelper(AuditTrailHelper) {
-			grailsApplication = grailsApplication
-			fieldPropsMap = fprops
-		}*/
-
-		/*
-		interceptor(AuditTrailInterceptor) {
-			auditTrailHelper = ref("auditTrailHelper")
-			fieldPropsMap = fprops
-		}*/
-
 		auditStampEventListener(AuditStampEventListener, ref('hibernateDatastore')) {
 			grailsApplication = grailsApplication
 			springSecurityService = ref("springSecurityService")
