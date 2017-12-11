@@ -33,7 +33,15 @@ import static org.codehaus.groovy.ast.MethodNode.ACC_STATIC;
  */
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 public class AuditStampASTTransformation implements ASTTransformation {
-	private static final ConfigObject CO = new ConfigSlurper().parse(getContents(new File("grails-app/conf/application.groovy")));
+	private ConfigObject CO;
+
+    public AuditStampASTTransformation() {
+        String modulePath = System.getProperty("module.path");
+        String configPath;
+        if(modulePath != null)  configPath = modulePath + "/grails-app/conf/application.groovy";
+        else configPath = "grails-app/conf/application.groovy";
+        CO = new ConfigSlurper().parse(getContents(new File(configPath)));
+    }
 
 	public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
 		Boolean enabled = (Boolean)FieldProps.getMap(CO, FieldProps.CONFIG_KEY + "." + "enabled");
@@ -136,7 +144,7 @@ public class AuditStampASTTransformation implements ASTTransformation {
 
 
 	static public String getContents(File aFile) {
-        System.out.println(aFile.getAbsolutePath());
+        //System.out.println(aFile.getAbsolutePath());
 		//...checks on aFile are elided
 		StringBuilder contents = new StringBuilder();
 

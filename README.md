@@ -168,3 +168,17 @@ Take a look at the source if you want to see what its doing.
 * refactor common stamp functions to AuditTrailHelper
 
 
+### Using AuditTrail in gradle multimodule projects
+AuditTrail AST Transoformation reads audit trail related settings from application.groovy.
+As long as the project with AuditStamp annotation is root gradle project, it works just fine.
+However when the project is a module of a multimodule gradle project, A system property needs to be set to aid AST tranformation class find the correct application.groovy from module directory.
+
+This can be achieved by setting the ```module.path``` in build.gradle of submodule as shown below.
+
+```groovy
+compileGroovy {
+    groovyOptions.fork = true
+    String path = projectDir.absolutePath
+    groovyOptions.forkOptions.jvmArgs = ['-Dmodule.path=' + path]
+}
+```
