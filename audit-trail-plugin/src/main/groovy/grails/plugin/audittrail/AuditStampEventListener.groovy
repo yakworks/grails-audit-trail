@@ -69,6 +69,8 @@ class AuditStampEventListener extends AbstractPersistenceEventListener {
     private void beforeInsert(PersistentEntity entity, EntityAccess ea) {
         setDateField(FieldProps.CREATED_DATE_KEY, ea)
         setUserField(FieldProps.CREATED_BY_KEY, ea)
+        setDateField(FieldProps.EDITED_DATE_KEY, ea)
+        setUserField(FieldProps.EDITED_BY_KEY, ea)
     }
 
     private void beforeUpdate(PersistentEntity entity, EntityAccess ea) {
