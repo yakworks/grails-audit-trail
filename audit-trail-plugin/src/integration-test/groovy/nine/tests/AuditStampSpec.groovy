@@ -115,7 +115,7 @@ class AuditStampSpec extends Specification {
 		assert d.updatedBy == 0
 	}
 
-
+    @spock.lang.Ignore("editedBy is now set from preInsert too")
 	void testValidateFalse(){
 		when:
 		TestDomain d = new TestDomain()
