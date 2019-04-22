@@ -1,0 +1,8 @@
+rootProject.name = 'audit-trail-root'
+include "examples:demo-app"
+
+include 'plugin'
+
+findProject(':plugin').with{
+  name = 'audit-trail'
+}

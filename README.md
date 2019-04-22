@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/9ci/grails-audit-trail.svg?branch=grails-3-upgrade)](https://travis-ci.org/9ci/grails-audit-trail)
+![CircleCI](https://img.shields.io/circleci/project/github/yakworks/grails-audit-trail.svg?longCache=true&style=for-the-badge)
 
 # Overview
 
