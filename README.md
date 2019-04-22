@@ -1,4 +1,4 @@
-![CircleCI](https://img.shields.io/circleci/project/github/yakworks/grails-audit-trail.svg?longCache=true&style=for-the-badge)
+![CircleCI](https://img.shields.io/circleci/project/github/9ci/grails-audit-trail.svg?longCache=true&style=for-the-badge)
 
 # Overview
 
