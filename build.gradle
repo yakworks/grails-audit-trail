@@ -1,0 +1,68 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://repo.grails.org/grails/core" }
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "org.yakworks:gradle-plugins:0.1.45"
+    }
+}
+
+apply plugin: 'yakworks.shipkit'
+
+repositories {
+    mavenLocal()
+    maven { url "https://repo.grails.org/grails/core" }
+    maven { url "http://repo.9ci.com/oss-snapshots" }
+}
+
+subprojects {
+    apply plugin: 'groovy'
+    plugins.withId('java') {
+
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+
+        repositories {
+            mavenLocal()
+            maven { url "https://repo.grails.org/grails/core" }
+            maven { url "http://repo.9ci.com/oss-snapshots" }
+        }
+
+
+        dependencies {
+
+            compile "org.springframework.boot:spring-boot-starter-logging"
+            compile "org.springframework.boot:spring-boot-autoconfigure"
+            compile "org.grails:grails-core"
+            compile "org.springframework.boot:spring-boot-starter-actuator"
+            compile "org.springframework.boot:spring-boot-starter-tomcat"
+            compile "org.grails:grails-web-boot"
+            compile "org.grails:grails-logging"
+
+            compile "org.grails:grails-plugin-databinding"
+            compile "org.grails:grails-plugin-i18n"
+            compile "org.grails:grails-plugin-services"
+            compile "org.grails:grails-plugin-url-mappings"
+            compile "org.grails:grails-plugin-interceptors"
+            compile "org.grails.plugins:cache"
+
+            testRuntime "org.apache.tomcat:tomcat-jdbc"
+            testCompile "org.grails:grails-gorm-testing-support"
+            testCompile "org.grails:grails-plugin-testing"
+            testCompile "org.grails:grails-web-testing-support"
+
+            runtime "com.h2database:h2"
+
+        }
+
+        test {
+            testLogging.exceptionFormat = 'full'
+        }
+
+    }
+
+}

@@ -1,0 +1,39 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+    }
+}
+
+version "0.1"
+group "demoapp"
+
+apply plugin:"war"
+apply plugin:"org.grails.grails-web"
+apply plugin:"org.grails.grails-gsp"
+
+dependencies {
+    profile "org.grails.profiles:web"
+    compile "org.grails.plugins:gsp"
+
+    provided "org.grails:grails-plugin-services"
+    provided "org.grails:grails-plugin-domain-class"
+
+}
+
+//SEE README in root project
+compileGroovy {
+    groovyOptions.fork = true
+    String path = projectDir.absolutePath
+    groovyOptions.forkOptions.jvmArgs = ['-Dmodule.path=' + path]
+}
+
+grails {
+    exploded = true
+    plugins {
+        compile project(':audit-trail')
+    }
+}

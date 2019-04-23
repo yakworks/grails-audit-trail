@@ -1,0 +1,42 @@
+
+apply plugin: "yakworks.grails-plugin"
+
+dependencies {
+    profile "org.grails.profiles:web-plugin"
+
+    provided "org.grails:grails-plugin-services"
+    provided "org.grails:grails-plugin-domain-class"
+    provided "commons-lang:commons-lang:2.6"
+
+    compile "org.grails.plugins:hibernate5"
+    compile "org.hibernate:hibernate-core:$versionHibernate"
+    compile "org.hibernate:hibernate-ehcache:$versionHibernate"
+
+    compile 'org.grails.plugins:spring-security-core:3.2.0'
+
+    testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.grails:grails-plugin-testing"
+    testCompile "org.grails:grails-web-testing-support"
+}
+
+bootRepackage.enabled = false
+
+bootRun {
+    jvmArgs('-Dspring.output.ansi.enabled=always')
+    addResources = true
+}
+
+codenarcTest {
+    exclude '**/*'
+    ignoreFailures = true
+}
+
+codenarcIntegrationTest {
+    exclude '**/*'
+    ignoreFailures = true
+}
+
+//Dont include domains from this plugin into jar
+jar {
+    exclude 'nine/tests/**'
+}
