@@ -7,11 +7,11 @@ buildscript {
 
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "org.yakworks:gradle-plugins:0.1.45"
+        classpath "org.yakworks:gradle-plugins:1.1.3"
     }
 }
 
-apply plugin: 'yakworks.shipkit'
+apply plugin: 'yakworks.shipyak'
 
 repositories {
     mavenLocal()
@@ -20,9 +20,7 @@ repositories {
 }
 
 subprojects {
-    apply plugin: 'groovy'
     plugins.withId('java') {
-
         sourceCompatibility = '1.8'
         targetCompatibility = '1.8'
 
@@ -32,9 +30,7 @@ subprojects {
             maven { url "http://repo.9ci.com/oss-snapshots" }
         }
 
-
         dependencies {
-
             compile "org.springframework.boot:spring-boot-starter-logging"
             compile "org.springframework.boot:spring-boot-autoconfigure"
             compile "org.grails:grails-core"
@@ -55,8 +51,7 @@ subprojects {
             testCompile "org.grails:grails-plugin-testing"
             testCompile "org.grails:grails-web-testing-support"
 
-            runtime "com.h2database:h2"
-
+            testRuntime "com.h2database:h2"
         }
 
         test {

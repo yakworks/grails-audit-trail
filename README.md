@@ -1,4 +1,18 @@
-![CircleCI](https://img.shields.io/circleci/project/github/9ci/grails-audit-trail.svg?longCache=true&style=for-the-badge)
+[![CircleCI](https://img.shields.io/circleci/project/github/9ci/grails-audit-trail/master.svg?longCache=true&style=for-the-badge&logo=circleci)](https://circleci.com/gh/yakworks/view-tools)
+[![9ci](https://img.shields.io/badge/BUILT%20BY-9ci%20Inc-blue.svg?longCache=true&style=for-the-badge)](http://9ci.com)
+<img src="https://forthebadge.com/images/badges/built-with-love.svg" height="28">
+[![forthebadge](https://forthebadge.com/images/badges/made-with-groovy.svg)](https://forthebadge.com)
+<img src="https://forthebadge.com/images/badges/gluten-free.svg" height="28">
+[![forthebadge](https://forthebadge.com/images/badges/approved-by-george-costanza.svg)](https://forthebadge.com)
+
+
+Install
+------
+
+```groovy
+compile "org.grails.plugins:audit-trail:3.0.9"
+
+```
 
 # Overview
 
