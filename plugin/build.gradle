@@ -1,4 +1,4 @@
-
+apply plugin: 'groovy'
 apply plugin: "yakworks.grails-plugin"
 
 dependencies {
@@ -24,11 +24,6 @@ bootRepackage.enabled = false
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always')
     addResources = true
-}
-
-codenarcTest {
-    exclude '**/*'
-    ignoreFailures = true
 }
 
 codenarcIntegrationTest {

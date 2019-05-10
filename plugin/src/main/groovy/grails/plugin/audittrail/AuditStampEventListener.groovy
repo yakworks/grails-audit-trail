@@ -1,13 +1,14 @@
+/*
+* Copyright 2019 Yak.Works - Licensed under the Apache License, Version 2.0 (the "License")
+* You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+*/
 package grails.plugin.audittrail
 
-import gorm.AuditStamp
-import gorm.FieldProps
-import grails.core.GrailsApplication
-import grails.core.GrailsDomainClass
-import grails.plugin.springsecurity.SpringSecurityService
-import grails.util.GrailsClassUtils
+import javax.annotation.PostConstruct
+
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+
 import org.grails.core.artefact.DomainClassArtefactHandler
 import org.grails.datastore.mapping.core.Datastore
 import org.grails.datastore.mapping.engine.EntityAccess
@@ -21,7 +22,12 @@ import org.grails.datastore.mapping.model.PersistentEntity
 import org.springframework.context.ApplicationEvent
 import org.springframework.core.annotation.AnnotationUtils
 
-import javax.annotation.PostConstruct
+import gorm.AuditStamp
+import gorm.FieldProps
+import grails.core.GrailsApplication
+import grails.core.GrailsDomainClass
+import grails.plugin.springsecurity.SpringSecurityService
+import grails.util.GrailsClassUtils
 
 @CompileStatic
 class AuditStampEventListener extends AbstractPersistenceEventListener {
