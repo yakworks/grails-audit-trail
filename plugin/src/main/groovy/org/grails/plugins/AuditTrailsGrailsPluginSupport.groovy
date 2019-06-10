@@ -4,6 +4,7 @@
 */
 package org.grails.plugins
 
+import gorm.AuditStampConfigLoader
 import grails.plugin.audittrail.AuditStampEventListener
 
 /**
@@ -15,7 +16,7 @@ class AuditTrailsGrailsPluginSupport {
 
         //dont register beans if audit trail is disabled.
         if (grailsApplication.config.grails.plugin.audittrail.enabled == false) return
-        Map fprops = gorm.FieldProps.buildFieldMap(grailsApplication.config)
+        Map fprops = gorm.FieldProps.buildFieldMap(new AuditStampConfigLoader().load())
 
         auditStampEventListener(AuditStampEventListener, ref('hibernateDatastore')) {
             grailsApplication = grailsApplication

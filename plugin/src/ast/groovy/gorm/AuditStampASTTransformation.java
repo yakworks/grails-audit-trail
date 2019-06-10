@@ -16,11 +16,9 @@ import org.codehaus.groovy.syntax.Types;
 import org.codehaus.groovy.transform.ASTTransformation;
 import org.codehaus.groovy.transform.GroovyASTTransformation;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -33,144 +31,111 @@ import static org.codehaus.groovy.ast.MethodNode.ACC_STATIC;
  */
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 public class AuditStampASTTransformation implements ASTTransformation {
-	private ConfigObject CO;
+    private ConfigObject CO;
 
     public AuditStampASTTransformation() {
-        String modulePath = System.getProperty("module.path");
-        String configPath;
-        if(modulePath != null)  configPath = modulePath + "/grails-app/conf/application.groovy";
-        else configPath = "grails-app/conf/application.groovy";
-        CO = new ConfigSlurper().parse(getContents(new File(configPath)));
+        CO = new AuditStampConfigLoader().load();
     }
 
-	public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
-		Boolean enabled = (Boolean)FieldProps.getMap(CO, FieldProps.CONFIG_KEY + "." + "enabled");
-		if(enabled != null && enabled == false) return;
+    public void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
+        Boolean enabled = (Boolean) FieldProps.getMap(CO, FieldProps.CONFIG_KEY + "." + "enabled");
+        if (enabled != null && enabled == false) return;
 
-		Map<String, FieldProps> fprops = FieldProps.buildFieldMap(CO);
+        Map<String, FieldProps> fprops = FieldProps.buildFieldMap(CO);
 
-		for (ASTNode astNode : astNodes) {
-			if (astNode instanceof ClassNode) {
-				ClassNode classNode = (ClassNode) astNode;
-				addDisableAuditStampField(classNode);
-				//debugFieldNodes(classNode);
+        for (ASTNode astNode : astNodes) {
+            if (astNode instanceof ClassNode) {
+                ClassNode classNode = (ClassNode) astNode;
+                addDisableAuditStampField(classNode);
+                //debugFieldNodes(classNode);
 
-				createUserField( classNode, fprops.get(FieldProps.EDITED_BY_KEY));
-				createUserField( classNode, fprops.get(FieldProps.CREATED_BY_KEY));
+                createUserField(classNode, fprops.get(FieldProps.EDITED_BY_KEY));
+                createUserField(classNode, fprops.get(FieldProps.CREATED_BY_KEY));
 
-				createDateField( classNode, fprops.get(FieldProps.EDITED_DATE_KEY));
-				createDateField( classNode, fprops.get(FieldProps.CREATED_DATE_KEY));
+                createDateField(classNode, fprops.get(FieldProps.EDITED_DATE_KEY));
+                createDateField(classNode, fprops.get(FieldProps.CREATED_DATE_KEY));
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	public void addDisableAuditStampField(ClassNode classNode){
+    public void addDisableAuditStampField(ClassNode classNode) {
         classNode.addField("disableAuditTrailStamp", Modifier.PUBLIC | Modifier.STATIC, new ClassNode(java.lang.Boolean.class), ConstantExpression.FALSE);
+    }
 
-	}
+    public void createUserField(ClassNode classNode, FieldProps fieldProps) {
+        if (fieldProps == null) return;
+        classNode.addProperty(fieldProps.name, Modifier.PUBLIC, new ClassNode(fieldProps.type), null, null, null);
+        addSettings("mapping", classNode, fieldProps.name, fieldProps.mapping);
+        addSettings("constraints", classNode, fieldProps.name, fieldProps.constraints);
+    }
 
-	public void createUserField(ClassNode classNode,FieldProps fieldProps){
-		if(fieldProps==null) return;
-		classNode.addProperty(fieldProps.name, Modifier.PUBLIC, new ClassNode(fieldProps.type), null, null, null);
-		addSettings("mapping",classNode,fieldProps.name,fieldProps.mapping);
-		addSettings("constraints",classNode,fieldProps.name,fieldProps.constraints);
-	}
+    public void createDateField(ClassNode classNode, FieldProps fieldProps) {
+        if (fieldProps == null) return;
+        classNode.addProperty(fieldProps.name, Modifier.PUBLIC, new ClassNode(fieldProps.type), null, null, null);
+        addSettings("mapping", classNode, fieldProps.name, fieldProps.mapping);
+        addSettings("constraints", classNode, fieldProps.name, fieldProps.constraints);
+    }
 
-	public void createDateField(ClassNode classNode,FieldProps fieldProps){
-		if(fieldProps==null) return;
-		classNode.addProperty(fieldProps.name, Modifier.PUBLIC, new ClassNode(fieldProps.type), null, null, null);
-		addSettings("mapping",classNode,fieldProps.name,fieldProps.mapping);
-		addSettings("constraints",classNode,fieldProps.name,fieldProps.constraints);
-	}
+    public void addSettings(String name, ClassNode classNode, String fieldName, String config) {
+        if (config == null) return;
 
-	public void addSettings(String name,ClassNode classNode,String fieldName,String config){
-		if(config == null) return;
+        String configStr = fieldName + " " + config;
 
-		String configStr = fieldName + " " + config;
+        BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0);
 
-		BlockStatement newConfig = (BlockStatement) new AstBuilder().buildFromString(configStr).get(0);
+        FieldNode closure = classNode.getField(name);
+        if (closure == null) {
+            createStaticClosure(classNode, name);
+            closure = classNode.getField(name);
+            assert closure != null;
+        }
 
-		FieldNode closure = classNode.getField(name);
-		if(closure == null){
-			createStaticClosure(classNode, name);
-			closure = classNode.getField(name);
-			assert closure != null;
-		}
+        if (!hasFieldInClosure(closure, fieldName)) {
+            ReturnStatement returnStatement = (ReturnStatement) newConfig.getStatements().get(0);
+            ExpressionStatement exStatment = new ExpressionStatement(returnStatement.getExpression());
+            ClosureExpression exp = (ClosureExpression) closure.getInitialExpression();
+            BlockStatement block = (BlockStatement) exp.getCode();
+            block.addStatement(exStatment);
+        }
 
-		if(!hasFieldInClosure(closure,fieldName)){
-			ReturnStatement returnStatement = (ReturnStatement) newConfig.getStatements().get(0);
-			ExpressionStatement exStatment = new ExpressionStatement(returnStatement.getExpression());
-			ClosureExpression exp = (ClosureExpression)closure.getInitialExpression();
-			BlockStatement block = (BlockStatement) exp.getCode();
-			block.addStatement(exStatment);
-		}
+        assert hasFieldInClosure(closure, fieldName) == true;
+    }
 
-		assert hasFieldInClosure(closure,fieldName) == true;
-	}
+    public void createStaticClosure(ClassNode classNode, String name) {
+        FieldNode field = new FieldNode(name, ACC_PUBLIC | ACC_STATIC, new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()), null);
+        ClosureExpression expr = new ClosureExpression(Parameter.EMPTY_ARRAY, new BlockStatement());
+        expr.setVariableScope(new VariableScope());
+        field.setInitialValueExpression(expr);
+        classNode.addField(field);
+    }
 
-	public void createStaticClosure(ClassNode classNode,String name){
-		FieldNode field = new FieldNode(name, ACC_PUBLIC | ACC_STATIC, new ClassNode(java.lang.Object.class), new ClassNode(classNode.getClass()),null);
-		ClosureExpression expr = new ClosureExpression(Parameter.EMPTY_ARRAY, new BlockStatement());
-		expr.setVariableScope(new VariableScope());
-		field.setInitialValueExpression(expr);
-		classNode.addField(field);
-	}
+    public boolean hasFieldInClosure(FieldNode closure, String fieldName) {
+        if (closure != null) {
+            ClosureExpression exp = (ClosureExpression) closure.getInitialExpression();
+            BlockStatement block = (BlockStatement) exp.getCode();
+            List<Statement> ments = block.getStatements();
+            for (Statement expstat : ments) {
+                if (expstat instanceof ExpressionStatement && ((ExpressionStatement) expstat).getExpression() instanceof MethodCallExpression) {
+                    MethodCallExpression methexp = (MethodCallExpression) ((ExpressionStatement) expstat).getExpression();
+                    ConstantExpression conexp = (ConstantExpression) methexp.getMethod();
+                    if (conexp.getValue().equals(fieldName)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
-	public boolean hasFieldInClosure(FieldNode closure, String fieldName){
-		if(closure != null){
-			ClosureExpression exp = (ClosureExpression) closure.getInitialExpression();
-			BlockStatement block = (BlockStatement) exp.getCode();
-			List<Statement> ments = block.getStatements();
-			for(Statement expstat : ments){
-				if(expstat instanceof ExpressionStatement && ((ExpressionStatement)expstat).getExpression() instanceof MethodCallExpression){
-					MethodCallExpression methexp = (MethodCallExpression)((ExpressionStatement)expstat).getExpression();
-					ConstantExpression conexp = (ConstantExpression)methexp.getMethod();
-					if(conexp.getValue().equals(fieldName)){
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
+    public void debugFieldNodes(ClassNode classNode) {
+        List<PropertyNode> fnlist = classNode.getProperties();
+        for (PropertyNode node : fnlist) {
+            System.out.println(classNode.getName() + " : " + node.getName() + ",");
+        }
+    }
 
-	public void debugFieldNodes(ClassNode classNode){
-		List<PropertyNode>	fnlist = classNode.getProperties() ;
-		for (PropertyNode node : fnlist) {
-			System.out.println(classNode.getName() + " : " + node.getName() + "," );
-		}
-	}
-
-
-	static public String getContents(File aFile) {
-        //System.out.println(aFile.getAbsolutePath());
-		//...checks on aFile are elided
-		StringBuilder contents = new StringBuilder();
-
-		try {
-			//use buffering, reading one line at a time
-			//FileReader always assumes default encoding is OK!
-			BufferedReader input =  new BufferedReader(new FileReader(aFile));
-			try {
-				String line = null;
-				while (( line = input.readLine()) != null){
-					contents.append(line);
-					contents.append(System.getProperty("line.separator"));
-				}
-			}
-			finally {
-				input.close();
-			}
-		}
-		catch (IOException ex){
-			ex.printStackTrace();
-		}
-
-		return contents.toString();
-	}
-
-	//old but kept for reference
+    //old but kept for reference
 	/*
 	public void addTableAndIdMapping(ClassNode classNode){
 		FieldNode closure = classNode.getDeclaredField("mapping");
@@ -217,37 +182,53 @@ public class AuditStampASTTransformation implements ASTTransformation {
 			}
 		}
 		*/
-		//System.out.println(block.toString());
+    //System.out.println(block.toString());
 }
 
 
 //FUTURE
 /**
-java.math.BigDecimal
-java.lang.Integer
-java.lang.Long
-java.util.Date
-java.lang.String
-java.lang.Boolean
-*/
+ * java.math.BigDecimal
+ * java.lang.Integer
+ * java.lang.Long
+ * java.util.Date
+ * java.lang.String
+ * java.lang.Boolean
+ * <p>
+ * since grails has everything default to nullable:false, we change that to nullable:true here since omost of the time we condider it ok
+ * explicity set nullable:false as the exception
+ * <p>
+ * public void addConstraintDefaults(ClassNode classNode){
+ * List<FieldNode>  fnlist = classNode.getFields();
+ * for(FieldNode fnode : fnlist){
+ * if(!fnode.isStatic()){
+ * //check if the type is in our list
+ * System.out.println("*" + fnode.getName() + " - " + fnode.getType().getName());
+ * }
+ * }
+ * <p>
+ * boolean hasConstraint=false;
+ * <p>
+ * }
+ **/
 
 /**
-since grails has everything default to nullable:false, we change that to nullable:true here since omost of the time we condider it ok
-explicity set nullable:false as the exception
+ since grails has everything default to nullable:false, we change that to nullable:true here since omost of the time we condider it ok
+ explicity set nullable:false as the exception
 
-public void addConstraintDefaults(ClassNode classNode){
-	List<FieldNode>  fnlist = classNode.getFields();
-	for(FieldNode fnode : fnlist){
-		if(!fnode.isStatic()){
-			//check if the type is in our list
-			System.out.println("*" + fnode.getName() + " - " + fnode.getType().getName());
-		}
-	}
+ public void addConstraintDefaults(ClassNode classNode){
+ List<FieldNode>  fnlist = classNode.getFields();
+ for(FieldNode fnode : fnlist){
+ if(!fnode.isStatic()){
+ //check if the type is in our list
+ System.out.println("*" + fnode.getName() + " - " + fnode.getType().getName());
+ }
+ }
 
-	boolean hasConstraint=false;
+ boolean hasConstraint=false;
 
-}
-**/
+ }
+ **/
 
 /*
 org.codehaus.groovy.ast.stmt.BlockStatement@f4b2da[

@@ -2,6 +2,7 @@ package joda
 
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
+import org.apache.commons.lang.time.DateUtils
 import spock.lang.Specification
 
 @Integration
@@ -15,7 +16,7 @@ class AuditThisTests extends Specification {
         then:
         assert audit.save(flush:true,failOnError:true)
         assert audit.createdDate
-        assert audit.createdDate == audit.editedDate
+        assert DateUtils.isSameInstant(audit.createdDate, audit.editedDate)
         assert audit.createdBy == 0
     }
 }
