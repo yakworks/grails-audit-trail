@@ -28,7 +28,7 @@ class TestDomainTests extends Specification implements DomainUnitTest<TestDomain
         d.properties = [name:'test', createdBy:99]
 
         then:
-        assert config.grails.plugin.audittrail
+        //assert config.grails.plugin.audittrail
         d.createdBy == null
     }
 }
