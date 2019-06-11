@@ -1,5 +1,5 @@
 # circleCI build file
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
@@ -71,4 +71,14 @@ jobs:
           name: ✔︎ -- Publish Library if needed [gradle ciPublish]
           command: gradle ciPublish --no-daemon
 
+
+orbs:
+  compare-url: iynere/compare-url@1.0.2
+
+workflows:
+  version: 2
+  build-flow:
+    jobs:
+      - build:
+          context: bot-context #context with shared ENV vars
 
