@@ -10,7 +10,7 @@ Install
 ------
 
 ```groovy
-compile "org.grails.plugins:audit-trail:3.0.10"
+compile "org.grails.plugins:audit-trail:3.0.11"
 
 ```
 
